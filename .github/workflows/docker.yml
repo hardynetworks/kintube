@@ -28,6 +28,8 @@ jobs:
             context: .
           - image: kintube-rtmp
             context: ./rtmp
+          - image: kintube-netbird
+            context: ./netbird
     steps:
       - uses: actions/checkout@v4
 

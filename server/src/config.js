@@ -37,6 +37,7 @@ export const config = {
     uploads: path.join(DATA_DIR, 'uploads'),   // chunked uploads in progress
     hls: path.resolve(env.HLS_DIR || path.join(DATA_DIR, 'hls')),               // written by nginx-rtmp
     recordings: path.resolve(env.RECORDINGS_DIR || path.join(DATA_DIR, 'recordings')), // written by nginx-rtmp
+    netbird: path.resolve(env.NETBIRD_CTL_DIR || path.join(DATA_DIR, 'netbird')),       // shared with the NetBird sidecar
   },
 };
 

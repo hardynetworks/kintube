@@ -16,6 +16,7 @@ A private, self-hosted YouTube for your family: share home videos, watch them on
 - **Live streaming** — each member gets a private stream key for OBS or a phone app (Larix). Live page with family chat, viewer count and timer. Streams are **auto-saved as replays**.
 - **Family** — invite links (admin / member / viewer roles), channels per person, likes, comments, search, sort by date filmed.
 - **Subscriptions** — subscribe to any family member's channel to get their videos in a Subscriptions feed, a Subscriptions section in the sidebar, and a notification bell alert when they upload or go live.
+- **Server admin** — storage, processing queue and versions at a glance, plus NetBird client settings and live connection status.
 - **Private** — everything (pages, video files, live streams) requires sign-in. Stream keys never appear in playback URLs.
 
 ## Architecture
@@ -60,7 +61,7 @@ Every push to `main` builds two images with GitHub Actions and publishes them to
 
 **Build from source instead of pulling:** `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`
 
-**Behind the NetBird reverse proxy:** add `COMPOSE_FILE=docker-compose.yml:docker-compose.netbird.yml` and `APP_BIND=<this server's NetBird IP>` to `.env`. That turns off Caddy and publishes the app on the NetBird interface only. In NetBird, add a Reverse Proxy service (HTTP) pointing at this peer on port 3000, with no NetBird authentication (KinCast has its own logins) and a **Block access** rule for the `/internal` path. Keep port 1935 open publicly for OBS.
+**Behind the NetBird reverse proxy (no ports to open for the site):** add `COMPOSE_FILE=docker-compose.yml:docker-compose.netbird.yml` to `.env` and run `docker compose up -d`. That turns off Caddy and starts a `netbird` client container (`ghcr.io/hardynetworks/kintube-netbird`). Then sign in as an admin, open **Server admin**, and enter your NetBird management URL and a setup key — KinCast joins your NetBird network as a peer. In NetBird, add a Reverse Proxy service (HTTP) targeting that peer on port 3000, with no NetBird authentication (KinCast has its own logins) and a **Block access** rule for the `/internal` path. Keep port 1935 open publicly for OBS.
 
 **Already running a reverse proxy?** Set `HTTP_PORT`/`HTTPS_PORT` in `.env` to free ports (or remove the `caddy` service) and point your proxy at `app:3000` — just block `/internal/*` and turn off response buffering for `/api/live/*` (chat uses Server-Sent Events).
 

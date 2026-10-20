@@ -47,6 +47,7 @@ services:
       - data:/data
       - hls:/hls
       - recordings:/recordings
+      - netbird_ctl:/netbird
     networks:
       kintube:
         # Fixed address: nginx-rtmp resolves its callback host only once at startup,
@@ -89,6 +90,7 @@ networks:
         - subnet: ${KINTUBE_SUBNET:-172.30.77.0/24}
 
 volumes:
+  netbird_ctl:
   db:
   data:
   hls:

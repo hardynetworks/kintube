@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Home, Radio, Clapperboard, Users, Settings, Upload, Search, Menu, LogOut, PlaySquare, CalendarHeart, Flame, BellRing,
+  Home, Radio, Clapperboard, Users, Settings, Upload, Search, Menu, LogOut, PlaySquare, CalendarHeart, Flame, BellRing, Server,
 } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
@@ -85,7 +85,7 @@ function NavItem({ to, icon: Icon, label, end, badge, isActive }) {
 const COLLAPSE_KEY = 'kc.sidebarCollapsed';
 
 export default function Layout() {
-  const { user, canUpload } = useAuth();
+  const { user, canUpload, isAdmin } = useAuth();
   const loc = useLocation();
   const [members, setMembers] = useState([]);
   const [drawer, setDrawer] = useState(false);
@@ -164,6 +164,7 @@ export default function Layout() {
           {canUpload && <NavItem to="/upload" icon={Upload} label="Upload" />}
           {canUpload && <NavItem to="/go-live" icon={Radio} label="Go live" />}
           <NavItem to="/settings" icon={Settings} label="Settings" />
+          {isAdmin && <NavItem to="/admin" icon={Server} label="Server admin" />}
         </nav>
 
         {subscribed.length > 0 && (

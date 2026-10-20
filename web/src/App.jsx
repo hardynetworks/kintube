@@ -15,14 +15,16 @@ import Studio from './pages/Studio.jsx';
 import GoLive from './pages/GoLive.jsx';
 import Family from './pages/Family.jsx';
 import Subscriptions from './pages/Subscriptions.jsx';
+import AdminServer from './pages/AdminServer.jsx';
 import Settings from './pages/Settings.jsx';
 import NotFound from './pages/NotFound.jsx';
 
-function Private({ children, member }) {
-  const { user, canUpload } = useAuth();
+function Private({ children, member, admin }) {
+  const { user, canUpload, isAdmin } = useAuth();
   const loc = useLocation();
   if (!user) return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
   if (member && !canUpload) return <Navigate to="/" replace />;
+  if (admin && !isAdmin) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -52,6 +54,7 @@ export default function App() {
         <Route path="go-live" element={<Private member><GoLive /></Private>} />
         <Route path="family" element={<Family />} />
         <Route path="subscriptions" element={<Subscriptions />} />
+        <Route path="admin" element={<Private admin><AdminServer /></Private>} />
         <Route path="settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Route>

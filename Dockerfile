@@ -22,9 +22,10 @@ ENV NODE_ENV=production \
     DATA_DIR=/data \
     HLS_DIR=/hls \
     RECORDINGS_DIR=/recordings \
+    NETBIRD_CTL_DIR=/netbird \
     WEB_DIR=/app/public
 
-RUN mkdir -p /data /hls /recordings && chown -R node:node /data /hls /recordings
+RUN mkdir -p /data /hls /recordings /netbird && chown -R node:node /data /hls /recordings /netbird
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

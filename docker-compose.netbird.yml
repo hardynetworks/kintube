@@ -2,14 +2,30 @@
 # Enable it by adding this line to .env (then just use `docker compose ...` as normal):
 #   COMPOSE_FILE=docker-compose.yml:docker-compose.netbird.yml
 #
-# - Caddy is turned off (NetBird terminates HTTPS for kintube.<your-domain>).
-# - The app is published on APP_BIND:APP_PORT so the NetBird peer on this server can reach it.
-#   Set APP_BIND to this server's NetBird IP (100.x.y.z) so the port is NOT reachable from the internet.
+# - Caddy is turned off (NetBird terminates HTTPS for your domain).
+# - A NetBird client runs in the `netbird` container. Connect it from KinCast's
+#   Server admin page (management URL + setup key) — nothing to install on the host.
+# - That peer relays port 3000 to the app, so in NetBird's Reverse Proxy you target
+#   this peer on port 3000. No app ports are published on the server.
 # - RTMP (1935) stays published directly on the server for OBS / phone apps.
 services:
-  app:
-    ports:
-      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3000}:3000"
+  netbird:
+    image: ${KINTUBE_NETBIRD_IMAGE:-ghcr.io/hardynetworks/kintube-netbird}:${KINTUBE_TAG:-latest}
+    restart: unless-stopped
+    depends_on: [app]
+    cap_add: [NET_ADMIN, NET_RAW, SYS_ADMIN, BPF]
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      APP_TARGET: ${APP_IP:-172.30.77.10}:3000
+      FORWARD_PORT: "3000"
+    volumes:
+      - netbird_ctl:/kintube         # settings from / status to the admin page
+      - netbird_state:/etc/netbird   # peer identity (survives restarts and updates)
+    networks: [kintube]
 
   caddy:
     profiles: ["caddy"]   # not started unless explicitly requested
+
+volumes:
+  netbird_state:
