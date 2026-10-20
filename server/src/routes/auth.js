@@ -188,5 +188,6 @@ r.get('/config', (_req, res) => {
   res.json({ maxUploadBytes: config.maxUploadBytes, chunkBytes: CHUNK_BYTES });
 });
 
-export const CHUNK_BYTES = 32 * 1024 * 1024; // under Cloudflare's 100 MB request cap
+// Upload chunk size. Must stay under any proxy's request-size cap (Cloudflare: 100 MB).
+export const CHUNK_BYTES = Math.min(95, Math.max(1, Number(process.env.UPLOAD_CHUNK_MB) || 32)) * 1024 * 1024;
 export default r;

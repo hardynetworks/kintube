@@ -42,6 +42,7 @@ services:
       TRANSCODE_RENDITIONS: ${TRANSCODE_RENDITIONS:-1080,720,360}
       X264_PRESET: ${X264_PRESET:-veryfast}
       KEEP_ORIGINALS: ${KEEP_ORIGINALS:-true}
+      UPLOAD_CHUNK_MB: ${UPLOAD_CHUNK_MB:-32}
     volumes:
       - data:/data
       - hls:/hls

@@ -1,0 +1,15 @@
+# Run KinCast behind the NetBird reverse proxy instead of the built-in Caddy.
+# Enable it by adding this line to .env (then just use `docker compose ...` as normal):
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.netbird.yml
+#
+# - Caddy is turned off (NetBird terminates HTTPS for kintube.<your-domain>).
+# - The app is published on APP_BIND:APP_PORT so the NetBird peer on this server can reach it.
+#   Set APP_BIND to this server's NetBird IP (100.x.y.z) so the port is NOT reachable from the internet.
+# - RTMP (1935) stays published directly on the server for OBS / phone apps.
+services:
+  app:
+    ports:
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3000}:3000"
+
+  caddy:
+    profiles: ["caddy"]   # not started unless explicitly requested

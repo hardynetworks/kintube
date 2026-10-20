@@ -60,6 +60,8 @@ Every push to `main` builds two images with GitHub Actions and publishes them to
 
 **Build from source instead of pulling:** `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`
 
+**Behind the NetBird reverse proxy:** add `COMPOSE_FILE=docker-compose.yml:docker-compose.netbird.yml` and `APP_BIND=<this server's NetBird IP>` to `.env`. That turns off Caddy and publishes the app on the NetBird interface only. In NetBird, add a Reverse Proxy service (HTTP) pointing at this peer on port 3000, with no NetBird authentication (KinCast has its own logins) and a **Block access** rule for the `/internal` path. Keep port 1935 open publicly for OBS.
+
 **Already running a reverse proxy?** Set `HTTP_PORT`/`HTTPS_PORT` in `.env` to free ports (or remove the `caddy` service) and point your proxy at `app:3000` — just block `/internal/*` and turn off response buffering for `/api/live/*` (chat uses Server-Sent Events).
 
 ### Going live
