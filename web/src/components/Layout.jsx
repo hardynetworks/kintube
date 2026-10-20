@@ -139,7 +139,7 @@ export default function Layout() {
           {canUpload && (
             <>
               <Link to="/go-live" className="icon-btn icon-btn--round hide-sm" title="Go live" aria-label="Go live"><Radio size={20} /></Link>
-              <Link to="/upload" className="icon-btn icon-btn--round" title="Upload" aria-label="Upload"><Upload size={20} /></Link>
+              <Link to="/upload" className="icon-btn icon-btn--round hide-sm" title="Upload" aria-label="Upload"><Upload size={20} /></Link>
             </>
           )}
           <Notifications />

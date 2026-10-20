@@ -639,3 +639,9 @@ input:disabled { opacity: 0.6; }
 .card + .admin-cols { margin-top: 0; }
 @media (max-width: 900px) { .site-fields { grid-template-columns: 1fr; } }
 .site-fields .field + .field { margin-top: 0; }
+@media (max-width: 640px) {
+  .topbar__left { gap: 4px; }
+  .search { min-width: 0; }
+  .search__box input { padding: 0 12px; }
+  .search__btn { padding: 0 12px; }
+}
