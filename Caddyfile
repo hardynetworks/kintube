@@ -1,0 +1,15 @@
+{$DOMAIN} {
+	encode zstd gzip
+
+	# RTMP callbacks are for the internal Docker network only.
+	respond /internal/* 404
+
+	reverse_proxy app:3000 {
+		# Keep Server-Sent Events (live chat) and big uploads streaming without buffering.
+		flush_interval -1
+	}
+
+	request_body {
+		max_size 40MB
+	}
+}

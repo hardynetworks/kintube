@@ -1,0 +1,59 @@
+# KinCast RTMP ingest (nginx-rtmp). Rendered by entrypoint.sh with envsubst.
+# OBS -> rtmp://<host>:1935/live  with the member's stream key.
+# 1. on_publish asks the KinCast app whether the key is valid. The app answers with a redirect to the
+#    member's public stream id, so the secret key never appears in playback URLs.
+# 2. The stream is repackaged to HLS (no re-encode) in /hls/<stream_id>/index.m3u8, served by the app.
+# 3. The stream is also recorded; when it ends, the app turns the recording into a family video.
+
+load_module /usr/lib/nginx/modules/ngx_rtmp_module.so;
+
+user www-data;
+worker_processes 1;            # nginx-rtmp keeps stream state per worker
+error_log /dev/stderr warn;
+pid /run/nginx.pid;
+
+events {
+  worker_connections 1024;
+}
+
+rtmp {
+  server {
+    listen 1935;
+    chunk_size 4096;
+    notify_method post;
+    max_message 10M;
+
+    application live {
+      live on;
+      deny play all;           # viewers watch HLS through the app, never raw RTMP
+
+      on_publish      ${APP_UPSTREAM}/internal/rtmp/publish?secret=${RTMP_CALLBACK_SECRET};
+      on_publish_done ${APP_UPSTREAM}/internal/rtmp/publish-done?secret=${RTMP_CALLBACK_SECRET};
+      on_record_done  ${APP_UPSTREAM}/internal/rtmp/record-done?secret=${RTMP_CALLBACK_SECRET};
+
+      record all;
+      record_path /recordings;
+      record_unique on;
+      record_suffix .flv;
+      record_max_size 16384M;
+
+      # Relay (after the rename) to the internal HLS packager below.
+      push rtmp://127.0.0.1:1935/show;
+    }
+
+    # Internal only: receives the renamed stream and writes HLS.
+    application show {
+      live on;
+      allow publish 127.0.0.1;
+      deny publish all;
+      deny play all;
+
+      hls on;
+      hls_path /hls;
+      hls_nested on;
+      hls_fragment 2s;
+      hls_playlist_length 12s;
+      hls_cleanup on;
+    }
+  }
+}

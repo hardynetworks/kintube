@@ -1,0 +1,96 @@
+# KinCast — family video sharing + live streaming
+#
+#   cp .env.example .env    # fill it in
+#   docker compose pull && docker compose up -d
+#
+# Images are built by GitHub Actions and published to GHCR.
+# To build from source instead:  docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+
+name: kintube
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kincast
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: kincast
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks: [kintube]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kincast"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: ${KINTUBE_IMAGE:-ghcr.io/hardynetworks/kintube}:${KINTUBE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://kincast:${POSTGRES_PASSWORD}@db:5432/kincast
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      RTMP_CALLBACK_SECRET: ${RTMP_CALLBACK_SECRET:?set RTMP_CALLBACK_SECRET in .env}
+      PUBLIC_URL: https://${DOMAIN:?set DOMAIN in .env}
+      RTMP_PUBLIC_URL: rtmp://${RTMP_HOST:-${DOMAIN}}:1935/live
+      SECURE_COOKIES: ${SECURE_COOKIES:-true}
+      MAX_UPLOAD_GB: ${MAX_UPLOAD_GB:-20}
+      TRANSCODE_RENDITIONS: ${TRANSCODE_RENDITIONS:-1080,720,360}
+      X264_PRESET: ${X264_PRESET:-veryfast}
+      KEEP_ORIGINALS: ${KEEP_ORIGINALS:-true}
+    volumes:
+      - data:/data
+      - hls:/hls
+      - recordings:/recordings
+    networks:
+      kintube:
+        # Fixed address: nginx-rtmp resolves its callback host only once at startup,
+        # so a stable IP keeps live streaming working when the app container is recreated.
+        ipv4_address: ${APP_IP:-172.30.77.10}
+
+  rtmp:
+    image: ${KINTUBE_RTMP_IMAGE:-ghcr.io/hardynetworks/kintube-rtmp}:${KINTUBE_TAG:-latest}
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      APP_UPSTREAM: http://${APP_IP:-172.30.77.10}:3000
+      RTMP_CALLBACK_SECRET: ${RTMP_CALLBACK_SECRET}
+    ports:
+      - "1935:1935"      # OBS / phone streaming apps connect here
+    volumes:
+      - hls:/hls
+      - recordings:/recordings
+    networks: [kintube]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [kintube]
+
+networks:
+  kintube:
+    ipam:
+      config:
+        - subnet: ${KINTUBE_SUBNET:-172.30.77.0/24}
+
+volumes:
+  db:
+  data:
+  hls:
+  recordings:
+  caddy_data:
+  caddy_config:
