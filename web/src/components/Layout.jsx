@@ -7,13 +7,16 @@ import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
 import { Avatar, Logo } from './ui.jsx';
 import Notifications from './Notifications.jsx';
+import ErrorBoundary from './ErrorBoundary.jsx';
 import { SUBS_EVENT } from './Subscribe.jsx';
 
 function SearchBox() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const [q, setQ] = useState(params.get('q') || '');
-  useEffect(() => setQ(params.get('q') || ''), [params]);
+  useEffect(() => {
+    setQ(params.get('q') || '');
+  }, [params]);
   return (
     <form
       className="search"
@@ -93,7 +96,9 @@ export default function Layout() {
     try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch { return false; }
   });
 
-  useEffect(() => setDrawer(false), [loc.pathname]);
+  useEffect(() => {
+    setDrawer(false);
+  }, [loc.pathname]);
 
   useEffect(() => {
     let alive = true;
@@ -192,7 +197,10 @@ export default function Layout() {
       {drawer && <div className="scrim" onClick={() => setDrawer(false)} />}
 
       <main className="main">
-        <Outlet />
+        {/* A crash in one page shouldn't blank the whole app; reset when the address changes. */}
+        <ErrorBoundary resetKey={loc.pathname + loc.search}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   );

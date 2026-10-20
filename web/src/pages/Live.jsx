@@ -19,7 +19,9 @@ function useTick(ms) {
 function Chat({ username, messages, onSend }) {
   const [body, setBody] = useState('');
   const endRef = useRef(null);
-  useEffect(() => endRef.current?.scrollIntoView({ block: 'end' }), [messages.length]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages.length]);
 
   return (
     <div className="chat">
