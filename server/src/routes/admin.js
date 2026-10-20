@@ -64,8 +64,9 @@ async function netbirdView() {
   const st = readStatus();
   const nb = st?.data?.netbird || {};
   const ctl = st?.data?.controller || {};
-  // The sidecar rewrites its status every ~5s; older than 30s means it isn't running.
-  const sidecar = !st ? 'missing' : st.ageSec > 30 ? 'stopped' : 'running';
+  // The sidecar rewrites its status every ~5s (at most ~40s apart while registering);
+  // older than 60s means it isn't running or is stuck.
+  const sidecar = !st ? 'missing' : st.ageSec > 60 ? 'stopped' : 'running';
   let state;
   if (sidecar !== 'running') state = 'no-client';
   else if (!s.enabled) state = 'disabled';

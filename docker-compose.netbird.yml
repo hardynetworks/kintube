@@ -21,7 +21,8 @@ services:
       FORWARD_PORT: "3000"
     volumes:
       - netbird_ctl:/kintube         # settings from / status to the admin page
-      - netbird_state:/etc/netbird   # peer identity (survives restarts and updates)
+      - netbird_state:/var/lib/netbird   # peer identity (current NetBird versions)
+      - netbird_etc:/etc/netbird         # peer identity (older NetBird versions)
     networks: [kintube]
 
   caddy:
@@ -29,3 +30,4 @@ services:
 
 volumes:
   netbird_state:
+  netbird_etc:

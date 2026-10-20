@@ -106,7 +106,13 @@ function NetBirdCard({ initial }) {
         KinCast runs its own NetBird client, so the NetBird reverse proxy can reach the site without opening ports on this server.
       </p>
 
-      {s.sidecar !== 'running' && (
+      {s.sidecar === 'stopped' && (
+        <div className="note note--warn">
+          The NetBird client stopped reporting. Check it with <code>sudo docker compose logs --tail=50 netbird</code> and
+          restart it with <code>sudo docker compose restart netbird</code>.
+        </div>
+      )}
+      {s.sidecar === 'missing' && (
         <div className="note note--warn">
           The NetBird client container isn't running. Add <code>COMPOSE_FILE=docker-compose.yml:docker-compose.netbird.yml</code> to
           your <code>.env</code> and run <code>docker compose up -d</code>, then come back here.
