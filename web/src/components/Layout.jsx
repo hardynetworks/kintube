@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Home, Radio, Clapperboard, Users, Settings, Upload, Search, Menu, LogOut, PlaySquare, CalendarHeart, Flame,
+  Home, Radio, Clapperboard, Users, Settings, Upload, Search, Menu, LogOut, PlaySquare, CalendarHeart, Flame, BellRing,
 } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
 import { Avatar, Logo } from './ui.jsx';
+import Notifications from './Notifications.jsx';
+import { SUBS_EVENT } from './Subscribe.jsx';
 
 function SearchBox() {
   const nav = useNavigate();
@@ -98,7 +100,8 @@ export default function Layout() {
     const load = () => api('/family/members').then((d) => alive && setMembers(d.members)).catch(() => {});
     load();
     const t = setInterval(load, 30000);
-    return () => { alive = false; clearInterval(t); };
+    window.addEventListener(SUBS_EVENT, load);
+    return () => { alive = false; clearInterval(t); window.removeEventListener(SUBS_EVENT, load); };
   }, []);
 
   function toggleMenu() {
@@ -111,7 +114,16 @@ export default function Layout() {
   }
 
   const liveCount = members.filter((m) => m.isLive).length;
-  const channels = members.filter((m) => m.role !== 'viewer' || m.videoCount > 0);
+  const others = members.filter((m) => m.id !== user.id);
+  const subscribed = others.filter((m) => m.subscribed);
+  const channels = others.filter((m) => !m.subscribed && (m.role !== 'viewer' || m.videoCount > 0));
+  const channelLink = (m) => (
+    <NavLink key={m.id} to={m.isLive ? `/live/${m.username}` : `/c/${m.username}`} className="nav-item nav-item--channel" title={m.displayName}>
+      <Avatar user={m} size={24} live={m.isLive} />
+      <span className="nav-item__label">{m.displayName}</span>
+      {m.isLive && <span className="dot-live" title="Live now" />}
+    </NavLink>
+  );
 
   return (
     <div className={`shell${collapsed ? ' shell--collapsed' : ''}`}>
@@ -130,6 +142,7 @@ export default function Layout() {
               <Link to="/upload" className="icon-btn icon-btn--round" title="Upload" aria-label="Upload"><Upload size={20} /></Link>
             </>
           )}
+          <Notifications />
           <UserMenu />
         </div>
       </header>
@@ -137,6 +150,7 @@ export default function Layout() {
       <aside className={`sidebar${drawer ? ' sidebar--open' : ''}`}>
         <nav className="sidebar__group">
           <NavItem to="/" end icon={Home} label="Home" isActive={(l) => l.pathname === '/' && !l.search.includes('sort=popular')} />
+          <NavItem to="/subscriptions" icon={BellRing} label="Subscriptions" />
           <NavItem to="/live" icon={Radio} label="Live now" badge={liveCount} />
           <NavItem to="/?sort=popular" icon={Flame} label="Most watched" isActive={(l) => l.pathname === '/' && l.search.includes('sort=popular')} />
           <NavItem to="/family" icon={Users} label="Family" />
@@ -152,17 +166,21 @@ export default function Layout() {
           <NavItem to="/settings" icon={Settings} label="Settings" />
         </nav>
 
-        <div className="sidebar__divider" />
-        <p className="sidebar__heading">Family channels</p>
-        <nav className="sidebar__group">
-          {channels.map((m) => (
-            <NavLink key={m.id} to={m.isLive ? `/live/${m.username}` : `/c/${m.username}`} className="nav-item nav-item--channel" title={m.displayName}>
-              <Avatar user={m} size={24} live={m.isLive} />
-              <span className="nav-item__label">{m.displayName}</span>
-              {m.isLive && <span className="dot-live" title="Live now" />}
-            </NavLink>
-          ))}
-        </nav>
+        {subscribed.length > 0 && (
+          <>
+            <div className="sidebar__divider" />
+            <p className="sidebar__heading">Subscriptions</p>
+            <nav className="sidebar__group">{subscribed.map(channelLink)}</nav>
+          </>
+        )}
+
+        {channels.length > 0 && (
+          <>
+            <div className="sidebar__divider" />
+            <p className="sidebar__heading">{subscribed.length ? 'More family' : 'Family channels'}</p>
+            <nav className="sidebar__group">{channels.map(channelLink)}</nav>
+          </>
+        )}
 
         <div className="sidebar__divider" />
         <p className="sidebar__foot">

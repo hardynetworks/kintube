@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import familyRoutes from './routes/family.js';
 import videoRoutes, { uploads, cleanupStaleUploads } from './routes/videos.js';
 import liveRoutes, { rtmp, sweepStaleLive } from './routes/live.js';
+import subscriptionRoutes, { pruneNotifications } from './routes/subscriptions.js';
 
 const app = express();
 app.set('trust proxy', true); // behind Caddy / Cloudflare
@@ -37,6 +38,7 @@ app.use('/api/family', familyRoutes);
 app.use('/api/uploads', uploads);
 app.use('/api/videos', videoRoutes);
 app.use('/api/live', liveRoutes);
+app.use('/api', subscriptionRoutes);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ---- Media (signed-in family only) ----
@@ -92,5 +94,6 @@ await resumeQueue();
 await cleanupStaleUploads();
 setInterval(() => sweepStaleLive().catch((e) => console.error('[live] sweep failed', e)), 60000);
 setInterval(() => cleanupStaleUploads().catch(() => {}), 60 * 60 * 1000);
+setInterval(() => pruneNotifications().catch(() => {}), 24 * 60 * 60 * 1000);
 
 app.listen(config.port, () => console.log(`[kincast] listening on :${config.port}`));

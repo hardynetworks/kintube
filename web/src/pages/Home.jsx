@@ -50,13 +50,16 @@ export default function Home() {
     setChip(params.get('sort') === 'popular' ? 'popular' : 'all');
   }, [params]);
 
+  const following = members.some((m) => m.subscribed);
   const chips = useMemo(() => [
-    ...BASE_CHIPS,
+    BASE_CHIPS[0],
+    ...(following ? [{ key: 'subs', label: 'Subscriptions', query: 'subscribed=1' }] : []),
+    ...BASE_CHIPS.slice(1),
     ...(memories.length ? [{ key: 'memories', label: 'On this day' }] : []),
     ...members
       .filter((m) => m.videoCount > 0)
       .map((m) => ({ key: `u:${m.username}`, label: m.displayName, query: `user=${encodeURIComponent(m.username)}` })),
-  ], [members, memories.length]);
+  ], [members, memories.length, following]);
   const active = chips.find((c) => c.key === chip) || BASE_CHIPS[0];
 
   useEffect(() => {
@@ -91,7 +94,9 @@ export default function Home() {
 
   if (q) return <SearchResults q={q} />;
 
-  const showLive = active.key === 'all' || active.key === 'live';
+  const subscribedIds = new Set(members.filter((m) => m.subscribed).map((m) => m.id));
+  const showLive = active.key === 'all' || active.key === 'live' || active.key === 'subs';
+  const liveCards = active.key === 'subs' ? live.filter((c) => subscribedIds.has(c.id)) : live;
   const list = active.key === 'memories' ? memories : videos;
 
   return (
@@ -114,7 +119,7 @@ export default function Home() {
       <div className="feed">
         {list === null ? (
           <div className="center pad"><Spinner /></div>
-        ) : list.length === 0 && !(showLive && live.length) ? (
+        ) : list.length === 0 && !(showLive && liveCards.length) ? (
           <Empty
             icon={Film}
             title={active.key === 'all' ? 'No videos yet' : 'Nothing here yet'}
@@ -125,7 +130,7 @@ export default function Home() {
         ) : (
           <>
             <div className="grid">
-              {showLive && live.map((c) => <LiveCard key={`live-${c.id}`} channel={c} />)}
+              {showLive && liveCards.map((c) => <LiveCard key={`live-${c.id}`} channel={c} />)}
               {list.map((v) => (
                 <div key={v.id} className="grid__cell">
                   {active.key === 'memories' && <span className="memory-tag">{yearsAgo(v.filmedOn)}</span>}

@@ -64,6 +64,10 @@ r.get('/', ah(async (req, res) => {
     vals.push(req.query.source);
     where.push(`v.source = $${vals.length}`);
   }
+  if (req.query.subscribed === '1') {
+    vals.push(req.user.id);
+    where.push(`v.user_id IN (SELECT channel_id FROM subscriptions WHERE subscriber_id = $${vals.length})`);
+  }
   if (req.query.exclude) {
     vals.push(String(req.query.exclude));
     where.push(`v.id <> $${vals.length}`);
@@ -104,13 +108,18 @@ r.get('/:id', ah(async (req, res) => {
   if (!v) throw httpError(404, 'Video not found');
   if (v.status !== 'ready' && !canEdit(req.user, v)) throw httpError(404, 'Video not found');
   const liked = await one('SELECT 1 FROM likes WHERE video_id = $1 AND user_id = $2', [v.id, req.user.id]);
-  res.json({
-    video: serializeVideo(v, {
+  const sub = await one(
+    `SELECT (SELECT count(*)::int FROM subscriptions WHERE channel_id = $1) AS n,
+            EXISTS (SELECT 1 FROM subscriptions WHERE channel_id = $1 AND subscriber_id = $2) AS mine`,
+    [v.user_id, req.user.id],
+  );
+  const video = serializeVideo(v, {
       liked: !!liked,
       canEdit: canEdit(req.user, v),
       hasOriginal: fs.existsSync(originalPath(v.id, v.original_ext)),
-    }),
   });
+  video.owner = { ...video.owner, subscribers: sub.n, subscribed: sub.mine };
+  res.json({ video });
 }));
 
 r.patch('/:id', ah(async (req, res) => {

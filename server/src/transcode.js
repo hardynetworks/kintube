@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
 import { q, one } from './db.js';
+import { notifyUpload } from './routes/subscriptions.js';
 
 const BITRATES = { 2160: 14000, 1440: 9000, 1080: 5000, 720: 2800, 480: 1400, 360: 800, 240: 400 };
 
@@ -159,5 +160,6 @@ async function processVideo(id) {
 
   if (!config.keepOriginals) fs.rmSync(input, { force: true });
   await q("UPDATE videos SET status = 'ready', progress = 100 WHERE id = $1", [id]);
+  await notifyUpload(id).catch((e) => console.error(`[notify] upload ${id}:`, e.message));
   console.log(`[transcode] ${id} ready (${rungs.map((g) => g.r + 'p').join(', ')})`);
 }

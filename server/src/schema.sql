@@ -89,3 +89,26 @@ CREATE TABLE IF NOT EXISTS uploads (
   next_index int NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Family members following each other's channels
+CREATE TABLE IF NOT EXISTS subscriptions (
+  subscriber_id int NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  channel_id    int NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (subscriber_id, channel_id),
+  CHECK (subscriber_id <> channel_id)
+);
+CREATE INDEX IF NOT EXISTS subscriptions_channel_idx ON subscriptions (channel_id);
+
+-- In-app notifications (bell): someone you follow uploaded or went live
+CREATE TABLE IF NOT EXISTS notifications (
+  id         serial PRIMARY KEY,
+  user_id    int NOT NULL REFERENCES users(id) ON DELETE CASCADE,   -- recipient
+  actor_id   int NOT NULL REFERENCES users(id) ON DELETE CASCADE,   -- who uploaded / went live
+  type       text NOT NULL CHECK (type IN ('upload', 'live')),
+  video_id   text REFERENCES videos(id) ON DELETE CASCADE,
+  title      text NOT NULL DEFAULT '',
+  read_at    timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS notifications_user_idx ON notifications (user_id, created_at DESC);

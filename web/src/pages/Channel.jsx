@@ -4,6 +4,7 @@ import { Film } from 'lucide-react';
 import { api } from '../api.js';
 import { Avatar, Empty, LiveBadge, Spinner } from '../components/ui.jsx';
 import { VideoGrid } from '../components/VideoCard.jsx';
+import SubscribeButton, { subscriberLabel } from '../components/Subscribe.jsx';
 
 export default function Channel() {
   const { username } = useParams();
@@ -29,8 +30,16 @@ export default function Channel() {
           <Avatar user={channel} size={92} live={channel.isLive} />
           <div>
             <h1 className="h1">{channel.displayName}</h1>
-            <p className="muted mono">@{channel.username} · {videos ? `${videos.length} video${videos.length === 1 ? '' : 's'}` : '…'}</p>
+            <p className="muted">
+              @{channel.username} · {subscriberLabel(channel.subscribers)} · {videos ? `${videos.length} video${videos.length === 1 ? '' : 's'}` : '…'}
+            </p>
           </div>
+          <SubscribeButton
+            username={channel.username}
+            subscribed={channel.subscribed}
+            size="md"
+            onChange={(d) => setChannel((c) => ({ ...c, subscribed: d.subscribed, subscribers: d.subscribers }))}
+          />
           {channel.isLive && (
             <Link to={`/live/${channel.username}`} className="btn btn--live"><LiveBadge small /> Watch live</Link>
           )}

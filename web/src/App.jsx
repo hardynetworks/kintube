@@ -14,6 +14,7 @@ import Channel from './pages/Channel.jsx';
 import Studio from './pages/Studio.jsx';
 import GoLive from './pages/GoLive.jsx';
 import Family from './pages/Family.jsx';
+import Subscriptions from './pages/Subscriptions.jsx';
 import Settings from './pages/Settings.jsx';
 import NotFound from './pages/NotFound.jsx';
 
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="studio" element={<Private member><Studio /></Private>} />
         <Route path="go-live" element={<Private member><GoLive /></Private>} />
         <Route path="family" element={<Family />} />
+        <Route path="subscriptions" element={<Subscriptions />} />
         <Route path="settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Route>

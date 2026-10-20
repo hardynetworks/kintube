@@ -6,6 +6,7 @@ import { useAuth } from '../auth.jsx';
 import Player from '../components/Player.jsx';
 import { Avatar, Empty, LiveBadge, Spinner } from '../components/ui.jsx';
 import { elapsed } from '../format.js';
+import SubscribeButton from '../components/Subscribe.jsx';
 
 function useTick(ms) {
   const [, set] = useState(0);
@@ -122,7 +123,15 @@ export default function Live() {
               )}
             </div>
           </div>
-          {isMe && <Link to="/go-live" className="btn btn--ghost btn--sm"><Radio size={15} /> Stream settings</Link>}
+          {isMe ? (
+            <Link to="/go-live" className="btn btn--ghost btn--sm"><Radio size={15} /> Stream settings</Link>
+          ) : (
+            <SubscribeButton
+              username={channel.username}
+              subscribed={channel.subscribed}
+              onChange={(d) => setChannel((c) => ({ ...c, subscribed: d.subscribed, subscribers: d.subscribers }))}
+            />
+          )}
         </div>
       </div>
       <Chat username={channel.displayName} messages={messages} onSend={send} />

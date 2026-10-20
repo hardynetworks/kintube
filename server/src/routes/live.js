@@ -8,6 +8,7 @@ import { ah, httpError, cleanText, randomId } from '../util.js';
 import { config } from '../config.js';
 import { subscribe, broadcast, viewerCount } from '../livehub.js';
 import { enqueue, videoDir, originalPath, probe } from '../transcode.js';
+import { notifyLive } from './subscriptions.js';
 
 // ======================= Family-facing live API =======================
 const r = Router();
@@ -36,9 +37,15 @@ r.get('/', ah(async (_req, res) => {
 }));
 
 r.get('/channel/:username', ah(async (req, res) => {
-  const u = await one('SELECT * FROM users WHERE username = $1', [req.params.username]);
+  const u = await one(
+    `SELECT u.*,
+       (SELECT count(*)::int FROM subscriptions s WHERE s.channel_id = u.id) AS subscriber_count,
+       EXISTS (SELECT 1 FROM subscriptions s WHERE s.channel_id = u.id AND s.subscriber_id = $2) AS subscribed
+     FROM users u WHERE u.username = $1`,
+    [req.params.username, req.user.id],
+  );
   if (!u) throw httpError(404, 'Channel not found');
-  res.json({ channel: serializeChannel(u) });
+  res.json({ channel: { ...serializeChannel(u), subscribers: u.subscriber_count, subscribed: u.subscribed } });
 }));
 
 r.get('/channel/:username/events', ah(async (req, res) => {
@@ -149,6 +156,7 @@ rtmp.post('/publish', ah(async (req, res) => {
   }
   await q('UPDATE users SET is_live = true, live_started_at = now() WHERE id = $1', [u.id]);
   broadcast(u.id, 'status', { isLive: true });
+  notifyLive(u.id, u.stream_title || `${u.display_name} is live`).catch((e) => console.error('[notify] live:', e.message));
   console.log(`[rtmp] ${u.username} is live (${u.stream_id})`);
   res.redirect(302, u.stream_id);
 }));

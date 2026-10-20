@@ -5,6 +5,7 @@ import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { Avatar, ErrorNote, Spinner, useCopy } from '../components/ui.jsx';
 import { ago } from '../format.js';
+import SubscribeButton, { subscriberLabel } from '../components/Subscribe.jsx';
 
 const ROLES = {
   admin: { label: 'Admin', icon: Shield, help: 'Manages family & invites' },
@@ -119,21 +120,28 @@ export default function Family() {
                   <Avatar user={m} size={44} live={m.isLive} />
                   <div>
                     <strong>{m.displayName}{m.id === user.id && <span className="muted"> (you)</span>}</strong>
-                    <span className="muted small">{m.videoCount} video{m.videoCount === 1 ? '' : 's'} · joined {ago(m.joinedAt)}</span>
+                    <span className="muted small">{m.videoCount} video{m.videoCount === 1 ? '' : 's'} · {subscriberLabel(m.subscribers)} · joined {ago(m.joinedAt)}</span>
                   </div>
                 </Link>
+                <div className="row gap">
+                  <SubscribeButton
+                    username={m.username}
+                    subscribed={m.subscribed}
+                    onChange={(d) => setMembers((list) => list.map((x) => (x.id === m.id ? { ...x, subscribed: d.subscribed, subscribers: d.subscribers } : x)))}
+                  />
                 {isAdmin ? (
-                  <div className="row gap">
+                  <>
                     <select value={m.role} onChange={(e) => setRole(m, e.target.value)} aria-label={`Role for ${m.displayName}`}>
                       {Object.entries(ROLES).map(([k, r]) => <option key={k} value={k}>{r.label}</option>)}
                     </select>
                     {m.id !== user.id && (
                       <button className="icon-btn icon-btn--danger" onClick={() => remove(m)} aria-label={`Remove ${m.displayName}`}><Trash2 size={16} /></button>
                     )}
-                  </div>
+                  </>
                 ) : (
                   <span className={`role role--${m.role}`}>{ROLES[m.role].label}</span>
                 )}
+                </div>
               </div>
             ))}
           </div>

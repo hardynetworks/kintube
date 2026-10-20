@@ -5,6 +5,7 @@ import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import Player from '../components/Player.jsx';
 import { UpNextCard } from '../components/VideoCard.jsx';
+import SubscribeButton, { subscriberLabel } from '../components/Subscribe.jsx';
 import EditVideo from '../components/EditVideo.jsx';
 import { Avatar, Empty, ErrorNote, Spinner, useCopy } from '../components/ui.jsx';
 import { ago, count, filmed } from '../format.js';
@@ -171,9 +172,15 @@ export default function Watch() {
             <Link to={`/c/${video.owner.username}`}><Avatar user={video.owner} size={40} /></Link>
             <div className="owner__text">
               <Link to={`/c/${video.owner.username}`} className="owner__name">{video.owner.displayName}</Link>
-              <span>@{video.owner.username}</span>
+              <span>{subscriberLabel(video.owner.subscribers)}</span>
             </div>
-            <Link to={`/c/${video.owner.username}`} className="btn btn--primary btn--sm owner__cta">View channel</Link>
+            <span className="owner__cta">
+              <SubscribeButton
+                username={video.owner.username}
+                subscribed={video.owner.subscribed}
+                onChange={(d) => setVideo((v) => ({ ...v, owner: { ...v.owner, subscribed: d.subscribed, subscribers: d.subscribers } }))}
+              />
+            </span>
           </div>
 
           <div className="watch__actions">

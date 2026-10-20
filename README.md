@@ -15,6 +15,7 @@ A private, self-hosted YouTube for your family: share home videos, watch them on
 - **Memories** — "date filmed" is read from phone metadata or the filename; the home page shows **On this day** videos from past years.
 - **Live streaming** — each member gets a private stream key for OBS or a phone app (Larix). Live page with family chat, viewer count and timer. Streams are **auto-saved as replays**.
 - **Family** — invite links (admin / member / viewer roles), channels per person, likes, comments, search, sort by date filmed.
+- **Subscriptions** — subscribe to any family member's channel to get their videos in a Subscriptions feed, a Subscriptions section in the sidebar, and a notification bell alert when they upload or go live.
 - **Private** — everything (pages, video files, live streams) requires sign-in. Stream keys never appear in playback URLs.
 
 ## Architecture

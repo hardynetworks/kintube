@@ -10,12 +10,13 @@ const r = Router();
 r.use(requireAuth);
 
 // Everyone in the family, with channel stats (powers the sidebar + family page).
-r.get('/members', ah(async (_req, res) => {
+r.get('/members', ah(async (req, res) => {
   const { rows } = await q(`
     SELECT u.id, u.username, u.display_name, u.role, u.avatar_color, u.is_live, u.created_at,
-           count(v.id) FILTER (WHERE v.status = 'ready')::int AS video_count
-    FROM users u LEFT JOIN videos v ON v.user_id = u.id
-    GROUP BY u.id ORDER BY u.is_live DESC, u.display_name`);
+           (SELECT count(*)::int FROM videos v WHERE v.user_id = u.id AND v.status = 'ready') AS video_count,
+           (SELECT count(*)::int FROM subscriptions s WHERE s.channel_id = u.id) AS subscriber_count,
+           EXISTS (SELECT 1 FROM subscriptions s WHERE s.channel_id = u.id AND s.subscriber_id = $1) AS subscribed
+    FROM users u ORDER BY u.is_live DESC, u.display_name`, [req.user.id]);
   res.json({
     members: rows.map((u) => ({
       id: u.id,
@@ -25,6 +26,8 @@ r.get('/members', ah(async (_req, res) => {
       avatarColor: u.avatar_color,
       isLive: u.is_live,
       videoCount: u.video_count,
+      subscribers: u.subscriber_count,
+      subscribed: u.subscribed,
       joinedAt: u.created_at,
     })),
   });
