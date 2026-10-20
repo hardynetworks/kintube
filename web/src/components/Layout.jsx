@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Home, Radio, Clapperboard, Users, Settings, Upload, Search, Menu, LogOut, Video } from 'lucide-react';
+import {
+  Home, Radio, Clapperboard, Users, Settings, Upload, Search, Menu, LogOut, PlaySquare, CalendarHeart, Flame,
+} from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
 import { Avatar, Logo } from './ui.jsx';
@@ -19,8 +21,10 @@ function SearchBox() {
         nav(q.trim() ? `/search?q=${encodeURIComponent(q.trim())}` : '/');
       }}
     >
-      <Search size={17} className="search__icon" />
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search family videos" aria-label="Search" />
+      <div className="search__box">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" aria-label="Search family videos" />
+        <button type="submit" className="search__btn" aria-label="Search"><Search size={16} /></button>
+      </div>
     </form>
   );
 }
@@ -38,7 +42,7 @@ function UserMenu() {
   return (
     <div className="menu" onClick={(e) => e.stopPropagation()}>
       <button className="menu__trigger" onClick={() => setOpen((o) => !o)} aria-label="Account menu">
-        <Avatar user={user} size={34} />
+        <Avatar user={user} size={32} />
       </button>
       {open && (
         <div className="menu__panel" onClick={() => setOpen(false)}>
@@ -46,13 +50,13 @@ function UserMenu() {
             <Avatar user={user} size={40} />
             <div>
               <strong>{user.displayName}</strong>
-              <span>{user.familyName} · {user.role}</span>
+              <span>@{user.username}</span>
             </div>
           </div>
-          <Link to={`/c/${user.username}`} className="menu__item"><Video size={16} /> My channel</Link>
-          <Link to="/settings" className="menu__item"><Settings size={16} /> Settings</Link>
+          <Link to={`/c/${user.username}`} className="menu__item"><PlaySquare size={18} /> Your channel</Link>
+          <Link to="/settings" className="menu__item"><Settings size={18} /> Settings</Link>
           <button className="menu__item" onClick={async () => { await logout(); nav('/login'); }}>
-            <LogOut size={16} /> Sign out
+            <LogOut size={18} /> Sign out
           </button>
         </div>
       )}
@@ -60,11 +64,32 @@ function UserMenu() {
   );
 }
 
+function NavItem({ to, icon: Icon, label, end, badge, isActive }) {
+  const loc = useLocation();
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      title={label}
+      className={({ isActive: routeActive }) => `nav-item${(isActive ? isActive(loc) : routeActive) ? ' active' : ''}`}
+    >
+      <Icon size={20} className="nav-item__icon" />
+      <span className="nav-item__label">{label}</span>
+      {badge ? <span className="nav-item__count">{badge}</span> : null}
+    </NavLink>
+  );
+}
+
+const COLLAPSE_KEY = 'kc.sidebarCollapsed';
+
 export default function Layout() {
   const { user, canUpload } = useAuth();
   const loc = useLocation();
   const [members, setMembers] = useState([]);
   const [drawer, setDrawer] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch { return false; }
+  });
 
   useEffect(() => setDrawer(false), [loc.pathname]);
 
@@ -76,25 +101,33 @@ export default function Layout() {
     return () => { alive = false; clearInterval(t); };
   }, []);
 
+  function toggleMenu() {
+    // Desktop: collapse to an icon rail. Narrow screens: slide-out drawer.
+    if (window.matchMedia('(max-width: 900px)').matches) return setDrawer((d) => !d);
+    setCollapsed((c) => {
+      try { localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1'); } catch { /* storage unavailable */ }
+      return !c;
+    });
+  }
+
   const liveCount = members.filter((m) => m.isLive).length;
   const channels = members.filter((m) => m.role !== 'viewer' || m.videoCount > 0);
 
   return (
-    <div className="shell">
+    <div className={`shell${collapsed ? ' shell--collapsed' : ''}`}>
       <header className="topbar">
         <div className="topbar__left">
-          <button className="icon-btn topbar__menu" onClick={() => setDrawer((d) => !d)} aria-label="Menu">
+          <button className="icon-btn icon-btn--round" onClick={toggleMenu} aria-label="Toggle menu">
             <Menu size={20} />
           </button>
-          <Logo height={28} />
-          <span className="topbar__family">{user.familyName}</span>
+          <Logo height={30} />
         </div>
         <SearchBox />
         <div className="topbar__right">
           {canUpload && (
             <>
-              <Link to="/go-live" className="btn btn--ghost btn--sm hide-sm"><Radio size={16} /> Go live</Link>
-              <Link to="/upload" className="btn btn--primary btn--sm"><Upload size={16} /> <span className="hide-sm">Upload</span></Link>
+              <Link to="/go-live" className="icon-btn icon-btn--round hide-sm" title="Go live" aria-label="Go live"><Radio size={20} /></Link>
+              <Link to="/upload" className="icon-btn icon-btn--round" title="Upload" aria-label="Upload"><Upload size={20} /></Link>
             </>
           )}
           <UserMenu />
@@ -102,24 +135,40 @@ export default function Layout() {
       </header>
 
       <aside className={`sidebar${drawer ? ' sidebar--open' : ''}`}>
-        <nav className="sidebar__nav">
-          <NavLink to="/" end className="nav-item"><Home size={19} /> Home</NavLink>
-          <NavLink to="/live" className="nav-item">
-            <Radio size={19} /> Live now {liveCount > 0 && <span className="nav-item__count">{liveCount}</span>}
-          </NavLink>
-          {canUpload && <NavLink to="/studio" className="nav-item"><Clapperboard size={19} /> Studio</NavLink>}
-          <NavLink to="/family" className="nav-item"><Users size={19} /> Family</NavLink>
+        <nav className="sidebar__group">
+          <NavItem to="/" end icon={Home} label="Home" isActive={(l) => l.pathname === '/' && !l.search.includes('sort=popular')} />
+          <NavItem to="/live" icon={Radio} label="Live now" badge={liveCount} />
+          <NavItem to="/?sort=popular" icon={Flame} label="Most watched" isActive={(l) => l.pathname === '/' && l.search.includes('sort=popular')} />
+          <NavItem to="/family" icon={Users} label="Family" />
         </nav>
-        <div className="sidebar__section">Channels</div>
-        <nav className="sidebar__channels">
+
+        <div className="sidebar__divider" />
+        <p className="sidebar__heading">You</p>
+        <nav className="sidebar__group">
+          <NavItem to={`/c/${user.username}`} icon={PlaySquare} label="Your videos" />
+          {canUpload && <NavItem to="/studio" icon={Clapperboard} label="Studio" />}
+          {canUpload && <NavItem to="/upload" icon={Upload} label="Upload" />}
+          {canUpload && <NavItem to="/go-live" icon={Radio} label="Go live" />}
+          <NavItem to="/settings" icon={Settings} label="Settings" />
+        </nav>
+
+        <div className="sidebar__divider" />
+        <p className="sidebar__heading">Family channels</p>
+        <nav className="sidebar__group">
           {channels.map((m) => (
-            <NavLink key={m.id} to={m.isLive ? `/live/${m.username}` : `/c/${m.username}`} className="channel-link">
-              <Avatar user={m} size={26} live={m.isLive} />
-              <span className="channel-link__name">{m.displayName}</span>
-              {m.isLive ? <span className="dot-live" title="Live now" /> : <span className="channel-link__count">{m.videoCount}</span>}
+            <NavLink key={m.id} to={m.isLive ? `/live/${m.username}` : `/c/${m.username}`} className="nav-item nav-item--channel" title={m.displayName}>
+              <Avatar user={m} size={24} live={m.isLive} />
+              <span className="nav-item__label">{m.displayName}</span>
+              {m.isLive && <span className="dot-live" title="Live now" />}
             </NavLink>
           ))}
         </nav>
+
+        <div className="sidebar__divider" />
+        <p className="sidebar__foot">
+          <CalendarHeart size={13} /> {user.familyName}<br />
+          Private family space · KinCast
+        </p>
       </aside>
       {drawer && <div className="scrim" onClick={() => setDrawer(false)} />}
 

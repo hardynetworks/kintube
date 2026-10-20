@@ -1,9 +1,14 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import '@fontsource-variable/space-grotesk';
-import '@fontsource-variable/inter';
-import '@fontsource-variable/jetbrains-mono';
+import '@fontsource/barlow/400.css';
+import '@fontsource/barlow/500.css';
+import '@fontsource/barlow/600.css';
+import '@fontsource/barlow/700.css';
+import '@fontsource/barlow-condensed/600.css';
+import '@fontsource/barlow-condensed/700.css';
+import '@fontsource/dm-mono/400.css';
+import '@fontsource/dm-mono/500.css';
 import './styles.css';
 import { AuthProvider } from './auth.jsx';
 import App from './App.jsx';

@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Heart, Download, Pencil, Trash2, CalendarDays, Radio, Loader, Send } from 'lucide-react';
+import { ThumbsUp, Download, Pencil, Trash2, Share2, Check, Radio, Loader } from 'lucide-react';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import Player from '../components/Player.jsx';
-import VideoCard from '../components/VideoCard.jsx';
+import { UpNextCard } from '../components/VideoCard.jsx';
 import EditVideo from '../components/EditVideo.jsx';
-import { Avatar, Empty, ErrorNote, Spinner } from '../components/ui.jsx';
+import { Avatar, Empty, ErrorNote, Spinner, useCopy } from '../components/ui.jsx';
 import { ago, count, filmed } from '../format.js';
 
 function Comments({ videoId }) {
   const { user } = useAuth();
   const [list, setList] = useState(null);
   const [body, setBody] = useState('');
+  const [focused, setFocused] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -20,12 +21,13 @@ function Comments({ videoId }) {
   }, [videoId]);
 
   async function post(e) {
-    e.preventDefault();
+    e?.preventDefault();
     if (!body.trim()) return;
     try {
       const { comment } = await api(`/videos/${videoId}/comments`, { method: 'POST', body: { body } });
       setList([comment, ...list]);
       setBody('');
+      setFocused(false);
       setError(null);
     } catch (err) {
       setError(err);
@@ -39,32 +41,41 @@ function Comments({ videoId }) {
 
   return (
     <section className="comments">
-      <h3 className="h3">{list ? count(list.length, 'comment') : 'Comments'}</h3>
+      <h2 className="comments__title">{list ? `${list.length.toLocaleString()} Comment${list.length === 1 ? '' : 's'}` : 'Comments'}</h2>
       <form className="comment-form" onSubmit={post}>
-        <Avatar user={user} size={36} />
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Say something nice…"
-          rows={1}
-          maxLength={2000}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) post(e); }}
-        />
-        <button className="icon-btn icon-btn--accent" aria-label="Post comment" disabled={!body.trim()}><Send size={18} /></button>
+        <Avatar user={user} size={32} />
+        <div className="comment-form__body">
+          <input
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onFocus={() => setFocused(true)}
+            placeholder="Add a comment..."
+            maxLength={2000}
+            aria-label="Add a comment"
+          />
+          {(focused || body) && (
+            <div className="comment-form__actions">
+              <button type="button" className="btn btn--text btn--sm" onClick={() => { setBody(''); setFocused(false); }}>Cancel</button>
+              <button className="btn btn--primary btn--sm" disabled={!body.trim()}>Comment</button>
+            </div>
+          )}
+        </div>
       </form>
       <ErrorNote error={error} />
       {list?.map((c) => (
         <div key={c.id} className="comment">
-          <Avatar user={c.author} size={34} />
+          <Avatar user={c.author} size={32} />
           <div className="comment__body">
             <div className="comment__head">
-              <Link to={`/c/${c.author.username}`}>{c.author.displayName}</Link>
+              <Link to={`/c/${c.author.username}`}>@{c.author.username}</Link>
               <span>{ago(c.createdAt)}</span>
-              {c.canDelete && (
-                <button className="link-btn" onClick={() => remove(c.id)} aria-label="Delete comment"><Trash2 size={14} /></button>
-              )}
             </div>
             <p>{c.body}</p>
+            {c.canDelete && (
+              <div className="comment__actions">
+                <button className="link-btn" onClick={() => remove(c.id)}><Trash2 size={12} /> Delete</button>
+              </div>
+            )}
           </div>
         </div>
       ))}
@@ -80,6 +91,7 @@ export default function Watch() {
   const [more, setMore] = useState([]);
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [copied, copy] = useCopy();
   const viewed = useRef(false);
 
   useEffect(() => {
@@ -87,6 +99,7 @@ export default function Watch() {
     let poll;
     setVideo(null);
     setError(null);
+    setExpanded(false);
     viewed.current = false;
     const load = () =>
       api(`/videos/${id}`).then((d) => {
@@ -104,7 +117,6 @@ export default function Watch() {
   if (!video) return <div className="page center pad"><Spinner /></div>;
 
   const ready = video.status === 'ready';
-  const portrait = video.height > video.width;
 
   async function toggleLike() {
     const d = await api(`/videos/${video.id}/like`, { method: video.liked ? 'DELETE' : 'PUT' });
@@ -127,7 +139,7 @@ export default function Watch() {
           <Player
             src={video.hls}
             poster={video.thumbnail}
-            portrait={portrait}
+            portrait={video.height > video.width}
             onPlay={() => {
               if (viewed.current) return;
               viewed.current = true;
@@ -153,42 +165,49 @@ export default function Watch() {
         )}
 
         <h1 className="watch__title">{video.title}</h1>
+
         <div className="watch__bar">
-          <Link to={`/c/${video.owner.username}`} className="owner">
-            <Avatar user={video.owner} size={40} />
-            <div>
-              <strong>{video.owner.displayName}</strong>
-              <span>{count(video.views, 'view')} · {ago(video.createdAt)}</span>
+          <div className="owner">
+            <Link to={`/c/${video.owner.username}`}><Avatar user={video.owner} size={40} /></Link>
+            <div className="owner__text">
+              <Link to={`/c/${video.owner.username}`} className="owner__name">{video.owner.displayName}</Link>
+              <span>@{video.owner.username}</span>
             </div>
-          </Link>
+            <Link to={`/c/${video.owner.username}`} className="btn btn--primary btn--sm owner__cta">View channel</Link>
+          </div>
+
           <div className="watch__actions">
-            <button className={`pill${video.liked ? ' pill--on' : ''}`} onClick={toggleLike} disabled={!ready}>
-              <Heart size={17} fill={video.liked ? 'currentColor' : 'none'} /> {video.likes}
+            <button className={`pill${video.liked ? ' pill--on' : ''}`} onClick={toggleLike} disabled={!ready} aria-pressed={video.liked}>
+              <ThumbsUp size={16} fill={video.liked ? 'currentColor' : 'none'} /> {video.likes.toLocaleString()}
+            </button>
+            <button className="pill" onClick={() => copy(window.location.href, 'share')}>
+              {copied === 'share' ? <Check size={16} /> : <Share2 size={16} />} {copied === 'share' ? 'Link copied' : 'Share'}
             </button>
             {video.hasOriginal && ready && (
-              <a className="pill" href={`/api/videos/${video.id}/download`}><Download size={17} /> Original</a>
+              <a className="pill" href={`/api/videos/${video.id}/download`}><Download size={16} /> Download</a>
             )}
             {video.canEdit && (
               <>
-                <button className="pill" onClick={() => setEditing(true)}><Pencil size={16} /> Edit</button>
-                <button className="pill pill--danger" onClick={remove} aria-label="Delete"><Trash2 size={16} /></button>
+                <button className="pill" onClick={() => setEditing(true)}><Pencil size={15} /> Edit</button>
+                <button className="pill pill--icon pill--danger" onClick={remove} aria-label="Delete video"><Trash2 size={16} /></button>
               </>
             )}
           </div>
         </div>
 
         <div className="desc">
-          <div className="desc__meta">
-            {video.filmedOn && <span><CalendarDays size={15} /> Filmed {filmed(video.filmedOn)}</span>}
-            {video.source === 'live' && <span><Radio size={15} /> Live stream replay</span>}
-          </div>
+          <p className="desc__meta">
+            <strong>{count(video.views, 'view')}</strong> · {ago(video.createdAt)}
+            {video.filmedOn && <> · Filmed {filmed(video.filmedOn)}</>}
+            {video.source === 'live' && <span className="desc__tag"><Radio size={13} /> Live replay</span>}
+          </p>
           {desc ? (
             <>
               <p className={`desc__text${longDesc && !expanded ? ' desc__text--clamp' : ''}`}>{desc}</p>
-              {longDesc && <button className="link-btn" onClick={() => setExpanded(!expanded)}>{expanded ? 'Show less' : 'Show more'}</button>}
+              {longDesc && <button className="desc__more" onClick={() => setExpanded(!expanded)}>{expanded ? 'Show less' : '...more'}</button>}
             </>
           ) : (
-            <p className="muted">No description.</p>
+            <p className="desc__text muted">No description.</p>
           )}
         </div>
 
@@ -196,10 +215,10 @@ export default function Watch() {
       </div>
 
       <aside className="watch__side">
-        <h3 className="h3">More from the family</h3>
-        <div className="stack">
-          {more.map((v) => <VideoCard key={v.id} video={v} compact />)}
-          {!more.length && <p className="muted">Nothing else yet.</p>}
+        <h2 className="side-title">Up next</h2>
+        <div className="upnext-list">
+          {more.map((v) => <UpNextCard key={v.id} video={v} />)}
+          {!more.length && <p className="muted small">Nothing else yet.</p>}
         </div>
       </aside>
 

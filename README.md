@@ -3,6 +3,7 @@
 <p align="center"><a href="https://github.com/hardynetworks/kintube/actions/workflows/docker.yml"><img src="https://github.com/hardynetworks/kintube/actions/workflows/docker.yml/badge.svg" alt="Build"></a></p>
 
 <p align="center"><img src="docs/screenshot-home.png" alt="KinCast home page" width="800"></p>
+<p align="center"><img src="docs/screenshot-watch.png" alt="KinCast watch page" width="800"></p>
 
 # KinCast
 
@@ -88,7 +89,9 @@ For live testing, build `rtmp/` and run it with `-p 1935:1935 -e RTMP_CALLBACK_S
 
 ## Brand
 
-`brand/` holds the logo: dark/light lockups, the mark, app icon, favicon (SVG + PNG + ICO). The mark is three connected nodes (the family) forming a play button, with broadcast waves for live. Colors: cyan `#22D3EE` → indigo `#6366F1` → magenta `#C026D3` on navy `#070A14`. Type: Space Grotesk, Inter, JetBrains Mono.
+`brand/` holds the logo: dark/light lockups, the mark, app icon, favicon (SVG + PNG + ICO). The mark is three connected nodes (the family) forming a play button, with broadcast waves for live. The logo uses cyan `#22D3EE` → indigo `#6366F1` → magenta `#C026D3`.
+
+The UI follows the "Video sharing app" Figma Make design: near-black `#0f0f0f`, greys `#1a1a1a` / `#272727`, red accent `#ff0000`, Barlow + Barlow Condensed + DM Mono (self-hosted via Fontsource).
 
 ## Known limits / ideas next
 
