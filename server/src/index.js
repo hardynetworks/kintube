@@ -12,6 +12,7 @@ import videoRoutes, { uploads, cleanupStaleUploads } from './routes/videos.js';
 import liveRoutes, { rtmp, sweepStaleLive } from './routes/live.js';
 import subscriptionRoutes, { pruneNotifications } from './routes/subscriptions.js';
 import adminRoutes, { syncNetbirdConfig } from './routes/admin.js';
+import { loadSiteSettings } from './site.js';
 
 const app = express();
 app.set('trust proxy', true); // behind Caddy / Cloudflare
@@ -91,6 +92,7 @@ app.use((err, req, res, _next) => {
 });
 
 await migrate();
+await loadSiteSettings();
 await sweepStaleLive();
 await resumeQueue();
 await cleanupStaleUploads();

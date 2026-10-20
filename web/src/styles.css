@@ -629,3 +629,13 @@ input:disabled { opacity: 0.6; }
   .kv-grid { grid-template-columns: 1fr; }
   .kv-grid > .kv:nth-last-child(2) { border-bottom: 1px solid var(--border); }
 }
+
+/* Domain & addresses */
+.site-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.input-prefix { display: flex; align-items: stretch; border: 1px solid var(--border); border-radius: var(--radius); background: var(--input-background); overflow: hidden; }
+.input-prefix:focus-within { border-color: rgba(255, 0, 0, 0.6); }
+.input-prefix > span { display: flex; align-items: center; padding: 0 10px; font: 400 13px/1 var(--font-mono); color: var(--muted-foreground); background: rgba(255, 255, 255, 0.04); white-space: nowrap; }
+.input-prefix input { border: 0 !important; border-radius: 0; background: transparent; min-width: 0; font-family: var(--font-mono); font-size: 14px; }
+.card + .admin-cols { margin-top: 0; }
+@media (max-width: 900px) { .site-fields { grid-template-columns: 1fr; } }
+.site-fields .field + .field { margin-top: 0; }

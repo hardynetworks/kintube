@@ -35,8 +35,9 @@ services:
       DATABASE_URL: postgres://kincast:${POSTGRES_PASSWORD}@db:5432/kincast
       SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
       RTMP_CALLBACK_SECRET: ${RTMP_CALLBACK_SECRET:?set RTMP_CALLBACK_SECRET in .env}
-      PUBLIC_URL: https://${DOMAIN:?set DOMAIN in .env}
-      RTMP_PUBLIC_URL: rtmp://${RTMP_HOST:-${DOMAIN}}:1935/live
+      # Starting addresses for links; can be changed later on the Server admin page.
+      DOMAIN: ${DOMAIN:-}
+      RTMP_HOST: ${RTMP_HOST:-}
       SECURE_COOKIES: ${SECURE_COOKIES:-true}
       MAX_UPLOAD_GB: ${MAX_UPLOAD_GB:-20}
       TRANSCODE_RENDITIONS: ${TRANSCODE_RENDITIONS:-1080,720,360}
@@ -73,7 +74,7 @@ services:
     restart: unless-stopped
     depends_on: [app]
     environment:
-      DOMAIN: ${DOMAIN}
+      DOMAIN: ${DOMAIN:-}
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"

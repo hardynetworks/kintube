@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from '../auth.js';
 import { ah, httpError, cleanText, randomId } from '../util.js';
 import { config } from '../config.js';
 import { videoDir } from '../transcode.js';
+import { publicUrl, rtmpUrl } from '../site.js';
 
 const r = Router();
 r.use(requireAuth);
@@ -34,7 +35,7 @@ r.get('/members', ah(async (req, res) => {
 }));
 
 r.get('/settings', ah(async (_req, res) => {
-  res.json({ familyName: await getSetting('family_name', 'KinCast'), rtmpUrl: config.rtmpUrl });
+  res.json({ familyName: await getSetting('family_name', 'KinCast'), rtmpUrl: rtmpUrl() });
 }));
 
 r.patch('/settings', requireRole('admin'), ah(async (req, res) => {
@@ -82,7 +83,7 @@ r.get('/invites', requireRole('admin'), ah(async (_req, res) => {
       expiresAt: i.expires_at,
       usedAt: i.used_at,
       usedByName: i.used_by_name,
-      url: `${config.publicUrl}/join/${i.code}`,
+      url: `${publicUrl()}/join/${i.code}`,
     })),
   });
 }));
@@ -95,7 +96,7 @@ r.post('/invites', requireRole('admin'), ah(async (req, res) => {
     "INSERT INTO invites (code, role, created_by, expires_at) VALUES ($1, $2, $3, now() + ($4 || ' days')::interval)",
     [code, role, req.user.id, String(days)],
   );
-  res.status(201).json({ code, role, url: `${config.publicUrl}/join/${code}` });
+  res.status(201).json({ code, role, url: `${publicUrl()}/join/${code}` });
 }));
 
 r.delete('/invites/:code', requireRole('admin'), ah(async (req, res) => {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Server, HardDrive, Film, Users, Cpu, Radio, Network, RefreshCw, Power, Check, Copy, Eye, EyeOff, ExternalLink,
+  Globe, RotateCcw, AlertTriangle,
 } from 'lucide-react';
 import { api } from '../api.js';
 import { ErrorNote, Spinner, useCopy } from '../components/ui.jsx';
@@ -183,6 +184,100 @@ function NetBirdCard({ initial }) {
   );
 }
 
+const hostOf = (url) => { try { return new URL(url.replace(/^rtmps?:/, 'http:')).hostname; } catch { return ''; } };
+
+function SiteCard({ initial, onSaved }) {
+  const [site, setSite] = useState(initial);
+  const [form, setForm] = useState({ siteUrl: hostOf(initial.publicUrl), rtmpUrl: hostOf(initial.rtmpUrl) });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [saved, setSaved] = useState(false);
+  const [check, setCheck] = useState(null); // null | 'checking' | 'ok' | 'fail'
+
+  const here = window.location.origin;
+  const mismatch = here !== site.publicUrl && !/localhost|127\.0\.0\.1/.test(here);
+
+  async function save(body) {
+    setBusy(true); setError(null); setCheck(null);
+    try {
+      const d = await api('/admin/site', { method: 'PUT', body });
+      setSite(d.site);
+      setForm({ siteUrl: hostOf(d.site.publicUrl), rtmpUrl: hostOf(d.site.rtmpUrl) });
+      onSaved?.(d.site);
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+    } catch (e) { setError(e); } finally { setBusy(false); }
+  }
+
+  // Cross-origin, so we can only learn "something answered over HTTPS" — enough to catch DNS/cert problems.
+  async function testSite() {
+    setCheck('checking');
+    try {
+      await fetch(`${site.publicUrl}/api/health`, { mode: 'no-cors', cache: 'no-store' });
+      setCheck('ok');
+    } catch { setCheck('fail'); }
+  }
+
+  return (
+    <section className="card">
+      <div className="card__title-row">
+        <h2 className="h3"><Globe size={18} /> Domain & addresses</h2>
+        {site.publicUrlFrom === 'admin' && <span className="state-pill"><span className="state-pill__dot" />Set here</span>}
+      </div>
+      <p className="muted small card__lead">The address family members use. KinCast puts it in invite links and stream links, so change it here when you move the site to a new domain.</p>
+
+      {mismatch && (
+        <div className="note note--warn row gap wrap">
+          <AlertTriangle size={16} />
+          <span>You're on <b>{here}</b>, but links use <b>{site.publicUrl}</b>.</span>
+          <button className="btn btn--ghost btn--sm" onClick={() => save({ siteUrl: here })} disabled={busy}>Use {window.location.host}</button>
+        </div>
+      )}
+
+      <form className="form" onSubmit={(e) => { e.preventDefault(); save(form); }}>
+        <div className="site-fields">
+          <label className="field"><span>Site domain</span>
+            <div className="input-prefix"><span>https://</span>
+              <input value={form.siteUrl} onChange={(e) => setForm({ ...form, siteUrl: e.target.value })} placeholder="kincast.vpn.hardynetworks.net" spellCheck={false} required />
+            </div>
+            <small>Where family opens KinCast — the domain on your NetBird reverse proxy service.</small>
+          </label>
+          <label className="field"><span>Streaming host (for OBS)</span>
+            <div className="input-prefix"><span>rtmp://</span>
+              <input value={form.rtmpUrl} onChange={(e) => setForm({ ...form, rtmpUrl: e.target.value })} placeholder="live.kincast.hardynetworks.net" spellCheck={false} required />
+              <span>:1935/live</span>
+            </div>
+            <small>Must reach this server directly (its public IP) — NetBird's web proxy doesn't carry streams.</small>
+          </label>
+        </div>
+        <ErrorNote error={error} />
+        <div className="row gap wrap">
+          <button className="btn btn--red" disabled={busy}>{saved ? <><Check size={15} /> Saved</> : busy ? 'Saving…' : 'Save addresses'}</button>
+          <button type="button" className="btn btn--ghost" onClick={testSite} disabled={check === 'checking'}>
+            <Globe size={15} /> {check === 'checking' ? 'Checking…' : 'Check site'}
+          </button>
+          {(site.publicUrlFrom === 'admin' || site.rtmpUrlFrom === 'admin') && (
+            <button type="button" className="btn btn--text" onClick={() => save({ siteUrl: '', rtmpUrl: '' })} disabled={busy} title={`Back to ${site.envPublicUrl}`}>
+              <RotateCcw size={15} /> Use .env values
+            </button>
+          )}
+          {check === 'ok' && <span className="text-ok small row gap-sm"><Check size={14} /> {hostOf(site.publicUrl)} answered over HTTPS</span>}
+          {check === 'fail' && <span className="text-danger small">Couldn't reach {hostOf(site.publicUrl)} yet — check the NetBird service and DNS below.</span>}
+        </div>
+      </form>
+
+      <details className="howto-box">
+        <summary>Moving to a new domain — checklist</summary>
+        <ol>
+          <li><b>NetBird → Reverse Proxy → Services:</b> edit the KinCast service (or add one) so its domain is the new address, target your KinCast <b>Peer</b>, port <b>3000</b>. If the domain ends in your NetBird proxy domain (e.g. <span className="mono">*.vpn.hardynetworks.net</span>), NetBird covers DNS and HTTPS for you; otherwise add a CNAME in Cloudflare to the address NetBird shows, as <b>DNS only</b>.</li>
+          <li><b>Streaming host:</b> an A record pointing at this server's public IP (<b>DNS only</b>), or just use the IP.</li>
+          <li><b>Save here</b>, then <b>Check site</b>. Invite links update automatically; anyone using OBS must update the server address on their Go live page.</li>
+          <li>Keep the old address in NetBird for a while so bookmarks keep working, then remove it.</li>
+        </ol>
+      </details>
+    </section>
+  );
+}
+
 export default function AdminServer() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -222,14 +317,20 @@ export default function AdminServer() {
         </Stat>
       </div>
 
+      <SiteCard
+        key={`${s.site.publicUrl}|${s.site.rtmpUrl}`}
+        initial={s.site}
+        onSaved={(site) => setData((d) => ({ ...d, server: { ...d.server, site } }))}
+      />
+
       <div className="admin-cols">
         <NetBirdCard initial={data.netbird} />
 
         <section className="card">
           <h2 className="h3"><Radio size={18} /> Site & streaming</h2>
           <div className="kv-grid kv-grid--single">
-            <Row label="Site address"><span className="mono">{s.publicUrl}</span></Row>
-            <Row label="Stream server (OBS)"><span className="mono">{s.rtmpUrl}</span></Row>
+            <Row label="Site address"><span className="mono">{s.site.publicUrl}</span></Row>
+            <Row label="Stream server (OBS)"><span className="mono">{s.site.rtmpUrl}</span></Row>
             <Row label="Live now">{c.live} stream{c.live === 1 ? '' : 's'}</Row>
             <Row label="Video qualities">{s.renditions.map((r) => `${r}p`).join(' · ')}</Row>
             <Row label="Max upload">{bytes(s.maxUploadBytes)}</Row>
@@ -237,7 +338,7 @@ export default function AdminServer() {
             <Row label="Software"><span className="mono">Node {s.node} · ffmpeg {s.ffmpeg || 'missing'}</span></Row>
             <Row label="Container"><span className="mono">{s.hostname}</span></Row>
           </div>
-          <p className="muted small">Address, stream server and video settings come from the server's <code>.env</code> file.</p>
+          <p className="muted small">Video quality and upload limits come from the server's <code>.env</code> file.</p>
         </section>
       </div>
     </div>

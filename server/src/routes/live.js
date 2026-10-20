@@ -9,6 +9,7 @@ import { config } from '../config.js';
 import { subscribe, broadcast, viewerCount } from '../livehub.js';
 import { enqueue, videoDir, originalPath, probe } from '../transcode.js';
 import { notifyLive } from './subscriptions.js';
+import { publicUrl, rtmpUrl } from '../site.js';
 
 // ======================= Family-facing live API =======================
 const r = Router();
@@ -97,12 +98,12 @@ r.post('/channel/:username/chat', ah(async (req, res) => {
 r.get('/me', requireRole('member'), ah(async (req, res) => {
   const u = await one('SELECT stream_key, stream_title, save_streams, is_live, username FROM users WHERE id = $1', [req.user.id]);
   res.json({
-    rtmpUrl: config.rtmpUrl,
+    rtmpUrl: rtmpUrl(),
     streamKey: u.stream_key,
     title: u.stream_title,
     saveStreams: u.save_streams,
     isLive: u.is_live,
-    watchUrl: `${config.publicUrl}/live/${u.username}`,
+    watchUrl: `${publicUrl()}/live/${u.username}`,
   });
 }));
 

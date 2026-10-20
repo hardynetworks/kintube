@@ -21,9 +21,10 @@ export const config = {
   databaseUrl: env.DATABASE_URL || 'postgres://kincast:kincast@localhost:5432/kincast',
   sessionSecret: secret(),
   secureCookies: env.SECURE_COOKIES ? env.SECURE_COOKIES === 'true' : env.NODE_ENV === 'production',
-  publicUrl: (env.PUBLIC_URL || 'http://localhost:3000').replace(/\/$/, ''),
+  // Defaults for the links KinCast generates; the Server admin page can override both.
+  publicUrl: (env.PUBLIC_URL || (env.DOMAIN ? `https://${env.DOMAIN}` : 'http://localhost:3000')).replace(/\/$/, ''),
   // What family members type into OBS, e.g. rtmp://live.example.com/live
-  rtmpUrl: env.RTMP_PUBLIC_URL || 'rtmp://localhost:1935/live',
+  rtmpUrl: env.RTMP_PUBLIC_URL || `rtmp://${env.RTMP_HOST || env.DOMAIN || 'localhost'}:1935/live`,
   rtmpCallbackSecret: env.RTMP_CALLBACK_SECRET || '',
   maxUploadBytes: Number(env.MAX_UPLOAD_GB || 20) * 1024 ** 3,
   renditions: (env.TRANSCODE_RENDITIONS || '1080,720,360').split(',').map(Number).filter(Boolean).sort((a, b) => b - a),

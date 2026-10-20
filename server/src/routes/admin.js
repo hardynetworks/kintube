@@ -9,6 +9,7 @@ import { q, one, getSetting, setSetting } from '../db.js';
 import { requireRole } from '../auth.js';
 import { ah, httpError, cleanText } from '../util.js';
 import { config } from '../config.js';
+import { siteView, normalizeSiteUrl, normalizeRtmpUrl, saveSiteSettings } from '../site.js';
 
 const r = Router();
 r.use(requireRole('admin'));
@@ -128,8 +129,7 @@ r.get('/server', ah(async (_req, res) => {
       cpus: os.cpus().length,
       memory: { total: os.totalmem(), free: os.freemem() },
       load: os.loadavg()[0],
-      publicUrl: config.publicUrl,
-      rtmpUrl: config.rtmpUrl,
+      site: siteView(),
       renditions: config.renditions,
       maxUploadBytes: config.maxUploadBytes,
       disk,
@@ -160,6 +160,24 @@ r.put('/netbird', ah(async (req, res) => {
   await setSetting('netbird_setup_key', setupKey);
   await syncNetbirdConfig();
   res.json(await netbirdView());
+}));
+
+// Site + streaming addresses used in links. Empty value = use the .env setting.
+r.put('/site', ah(async (req, res) => {
+  const body = req.body || {};
+  const update = {};
+  if (body.siteUrl !== undefined) {
+    const v = normalizeSiteUrl(body.siteUrl);
+    if (v === null) throw httpError(400, 'Enter a domain like kincast.vpn.hardynetworks.net');
+    update.siteUrl = v;
+  }
+  if (body.rtmpUrl !== undefined) {
+    const v = normalizeRtmpUrl(body.rtmpUrl);
+    if (v === null) throw httpError(400, 'Enter a streaming host like live.example.com or the server IP');
+    update.rtmpUrl = v;
+  }
+  await saveSiteSettings(update);
+  res.json({ site: siteView() });
 }));
 
 r.post('/netbird/reconnect', ah(async (_req, res) => {
