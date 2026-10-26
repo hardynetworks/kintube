@@ -92,6 +92,14 @@ OBS and phone apps connect straight to the server on **TCP 1935**, so:
 - open **1935/tcp** in the server's firewall, and
 - give it a hostname that points at the server's public IP — e.g. `live.example.net`, **DNS only** (grey cloud) if you use Cloudflare — and enter it under **Server admin → Domain & addresses → Streaming host**.
 
+### On HardyOS (one click)
+
+KinCast ships as a one-click app for [HardyOS](https://github.com/HARDYOS/HARDYOS).
+Open **App Store › Discover › KinCast › Install**, or upload `kincast.hardyapp`
+from a [release](https://github.com/hardynetworks/kintube/releases). HardyOS picks
+free ports, generates the passwords, keeps the videos in their own ZFS dataset and
+starts everything. The package lives in [`hardyos/`](hardyos/).
+
 ## Going live
 
 **Go live** (in the sidebar) shows your server address and private stream key.
