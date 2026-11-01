@@ -112,3 +112,24 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS notifications_user_idx ON notifications (user_id, created_at DESC);
+
+-- TVs (the Roku channel) signed in by pairing: the TV shows a code, a signed-in
+-- family member approves it at /tv. Removing the row signs the TV out.
+CREATE TABLE IF NOT EXISTS tv_devices (
+  id           text PRIMARY KEY,
+  user_id      int NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name         text NOT NULL,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  last_seen_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS tv_devices_user_idx ON tv_devices (user_id);
+
+CREATE TABLE IF NOT EXISTS tv_pairings (
+  code        text PRIMARY KEY,           -- shown on the TV, typed on a phone
+  poll_hash   text UNIQUE NOT NULL,       -- sha256 of the TV's secret poll token
+  device_name text NOT NULL,
+  user_id     int REFERENCES users(id) ON DELETE CASCADE,
+  device_id   text,
+  expires_at  timestamptz NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- One video: big picture, what it is, and Play / Resume. -->
+<component name="DetailsScreen" extends="Group">
+  <interface>
+    <field id="video" type="assocarray" onChange="showVideo" />
+    <field id="action" type="assocarray" alwaysNotify="true" />
+    <field id="closing" type="boolean" />
+    <field id="shown" type="boolean" alwaysNotify="true" onChange="onShown" />
+    <function name="takeFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/lib/util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/lib/api.brs" />
+  <script type="text/brightscript" uri="pkg:/components/screens/DetailsScreen.brs" />
+  <children>
+    <Poster id="backdrop" width="1920" height="1080" loadDisplayMode="scaleToZoom" opacity="0.22" />
+    <Poster uri="pkg:/images/fade_left.png" width="1920" height="1080" />
+    <Poster uri="pkg:/images/fade_bottom.png" width="1920" height="500" translation="[0,580]" />
+
+    <Group translation="[96,150]">
+      <Poster id="ownerDot" uri="pkg:/images/circle.png" width="52" height="52" />
+      <Label id="ownerInitials" width="52" height="52" horizAlign="center" vertAlign="center" color="0xFFFFFFFF" />
+      <Label id="ownerName" translation="[70,0]" height="52" vertAlign="center" color="0xF1F1F1FF" />
+      <Label id="title" translation="[0,80]" width="900" maxLines="3" wrap="true" lineSpacing="-6" color="0xFFFFFFFF" />
+      <Label id="meta" translation="[0,330]" width="900" color="0xAAAAAAFF" />
+      <Label id="desc" translation="[0,390]" width="860" maxLines="6" wrap="true" color="0xC8C8C8FF" />
+    </Group>
+
+    <Poster id="frame" uri="pkg:/images/card.9.png" blendColor="0x1A1A1AFF" width="760" height="428" translation="[1064,170]" />
+    <Poster id="thumb" width="760" height="428" translation="[1064,170]" loadDisplayMode="scaleToZoom" />
+
+    <ButtonGroup id="buttons" translation="[96,720]" minWidth="460" buttonHeight="80" itemSpacings="[20]"
+      focusBitmapUri="pkg:/images/button_focus.9.png" focusFootprintBitmapUri="pkg:/images/button.9.png"
+      textColor="0xF1F1F1FF" focusedTextColor="0x0F0F0FFF" iconUri="" focusedIconUri="" />
+  </children>
+</component>

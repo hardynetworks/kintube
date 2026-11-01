@@ -24,13 +24,40 @@ export function clearSession(res) {
 export const USER_COLUMNS =
   'id, username, email, display_name, role, avatar_color, stream_id, stream_title, is_live, live_started_at, save_streams, created_at';
 
-/** Attach req.user if a valid session cookie is present. Never rejects. */
+/** A TV's token: signed like a session, and valid while its tv_devices row exists. */
+export function tvToken(userId, deviceId) {
+  return jwt.sign({ uid: userId, tv: deviceId }, config.sessionSecret);
+}
+
+const seen = new Map(); // device id -> last time last_seen_at was written
+
+/**
+ * Attach req.user if a valid session cookie (browsers) or bearer token (TVs)
+ * is present. Never rejects.
+ */
 export async function loadUser(req, _res, next) {
-  const token = req.cookies?.[COOKIE];
+  const bearer = /^Bearer\s+(\S+)$/i.exec(req.get('authorization') || '')?.[1];
+  const token = bearer || req.cookies?.[COOKIE];
   if (!token) return next();
   try {
-    const { uid } = jwt.verify(token, config.sessionSecret);
-    req.user = await one(`SELECT ${USER_COLUMNS} FROM users WHERE id = $1`, [uid]);
+    const claims = jwt.verify(token, config.sessionSecret);
+    if (bearer) {
+      // Only TV tokens are accepted as bearer tokens, and only while the TV is connected.
+      if (!claims.tv) throw new Error('not a TV token');
+      const dev = await one('SELECT 1 FROM tv_devices WHERE id = $1 AND user_id = $2', [claims.tv, claims.uid]);
+      if (!dev) throw new Error('TV removed');
+      req.tvDevice = claims.tv;
+      const last = seen.get(claims.tv) || 0;
+      if (Date.now() - last > 5 * 60 * 1000) {
+        seen.set(claims.tv, Date.now());
+        one('UPDATE tv_devices SET last_seen_at = now() WHERE id = $1', [claims.tv]).catch(() => {});
+      }
+    } else if (claims.tv) {
+      throw new Error('TV tokens are not cookies');
+    }
+    req.user = await one(`SELECT ${USER_COLUMNS} FROM users WHERE id = $1`, [claims.uid]);
+    // A TV only watches: whoever paired it, it can't upload, go live or manage the family.
+    if (req.tvDevice && req.user) req.user = { ...req.user, role: 'viewer' };
   } catch {
     req.user = null;
   }

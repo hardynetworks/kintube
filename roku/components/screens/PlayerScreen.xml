@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Plays a video (with resume) or a live stream (with family chat). -->
+<component name="PlayerScreen" extends="Group">
+  <interface>
+    <field id="video" type="assocarray" onChange="playVideo" />
+    <field id="startAt" type="integer" />
+    <field id="channel" type="assocarray" onChange="playLive" />
+    <field id="action" type="assocarray" alwaysNotify="true" />
+    <field id="closing" type="boolean" onChange="onClosing" />
+    <field id="shown" type="boolean" alwaysNotify="true" />
+    <function name="takeFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/lib/util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/lib/api.brs" />
+  <script type="text/brightscript" uri="pkg:/components/screens/PlayerScreen.brs" />
+  <children>
+    <Rectangle width="1920" height="1080" color="0x000000FF" />
+    <Video id="video" width="1920" height="1080" enableUI="true" />
+
+    <!-- Live: who and what, top left -->
+    <Group id="liveInfo" visible="false" translation="[96,64]">
+      <Poster uri="pkg:/images/card.9.png" blendColor="0x000000AA" width="760" height="120" />
+      <Poster uri="pkg:/images/card.9.png" blendColor="0xFF0000FF" width="84" height="36" translation="[24,22]" />
+      <Label id="liveBadge" text="LIVE" width="84" height="36" horizAlign="center" vertAlign="center" translation="[24,22]" color="0xFFFFFFFF" />
+      <Label id="viewers" translation="[124,22]" height="36" vertAlign="center" color="0xDDDDDDFF" />
+      <Label id="liveTitle" translation="[24,66]" width="712" maxLines="1" color="0xFFFFFFFF" />
+    </Group>
+
+    <!-- Live: family chat, right side; * shows or hides it -->
+    <Group id="chat" visible="false" translation="[1384,64]">
+      <Poster uri="pkg:/images/card.9.png" blendColor="0x000000B0" width="460" height="900" />
+      <Label id="chatTitle" text="Family chat" translation="[24,20]" color="0xFFFFFFFF" />
+      <Label id="chatHint" text="* hide" width="412" horizAlign="right" translation="[24,24]" color="0x888888FF" />
+      <Label id="chatText" translation="[24,76]" width="412" height="800" wrap="true" vertAlign="bottom" color="0xE6E6E6FF" />
+    </Group>
+
+    <!-- Messages: waiting for a stream, the stream ended, errors -->
+    <Group id="notice" visible="false">
+      <Rectangle width="1920" height="1080" color="0x0F0F0FE6" />
+      <Label id="noticeTitle" width="1920" horizAlign="center" translation="[0,430]" color="0xFFFFFFFF" />
+      <Label id="noticeText" width="1300" wrap="true" horizAlign="center" translation="[310,530]" color="0xAAAAAAFF" />
+    </Group>
+
+    <Timer id="statusTimer" repeat="true" duration="15" />
+    <Timer id="chatTimer" repeat="true" duration="4" />
+    <Timer id="waitTimer" repeat="true" duration="3" />
+    <Timer id="exitTimer" repeat="false" duration="5" />
+  </children>
+</component>

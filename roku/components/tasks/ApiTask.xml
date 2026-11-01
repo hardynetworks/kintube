@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- One HTTP call to the KinCast API, off the render thread. -->
+<component name="ApiTask" extends="Task">
+  <interface>
+    <field id="method" type="string" value="GET" />
+    <field id="path" type="string" />
+    <field id="body" type="assocarray" />
+    <!-- Overrides the saved server (used while checking a new address). -->
+    <field id="server" type="string" />
+    <!-- Overrides the saved sign-in (signing out after it's forgotten). -->
+    <field id="token" type="string" />
+    <field id="timeoutMs" type="integer" value="20000" />
+    <!-- {ok, status, data, error} -->
+    <field id="response" type="assocarray" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/tasks/ApiTask.brs" />
+</component>

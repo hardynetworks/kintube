@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Holds the screens and decides where to start: server address, sign-in, or home. -->
+<component name="MainScene" extends="Scene">
+  <interface>
+    <field id="launchArgs" type="assocarray" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/lib/util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/lib/api.brs" />
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+  <children>
+    <Group id="screens" />
+    <Group id="starting" visible="true">
+      <Poster id="startLogo" uri="pkg:/images/logo.png" width="365" height="120" translation="[778,420]" />
+      <BusySpinner id="spinner" translation="[912,600]" visible="true" />
+    </Group>
+  </children>
+</component>

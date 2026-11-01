@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Check, Tv } from 'lucide-react';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { Avatar, ErrorNote } from '../components/ui.jsx';
+import { ago } from '../format.js';
 
 const COLORS = ['#22D3EE', '#6366F1', '#C026D3', '#F43F5E', '#F59E0B', '#10B981', '#3B82F6', '#A855F7'];
 
@@ -81,6 +83,8 @@ export default function Settings() {
         <div className="row gap"><button className="btn btn--ghost">Change password</button><Saved on={saved === 'password'} /></div>
       </form>
 
+      <TvDevices />
+
       {isAdmin && (
         <form className="card form" onSubmit={saveFamily}>
           <h3 className="h3">Family</h3>
@@ -91,5 +95,50 @@ export default function Settings() {
         </form>
       )}
     </div>
+  );
+}
+
+/** TVs signed in to this account (the KinCast TV app), with a way to sign each out. */
+function TvDevices() {
+  const [devices, setDevices] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    api('/tv/devices').then((d) => setDevices(d.devices)).catch(setError);
+  }, []);
+
+  async function remove(d) {
+    if (!window.confirm(`Sign ${d.name} out of KinCast?`)) return;
+    try {
+      await api(`/tv/devices/${d.id}`, { method: 'DELETE' });
+      setDevices((list) => list.filter((x) => x.id !== d.id));
+    } catch (err) { setError(err); }
+  }
+
+  return (
+    <section className="card">
+      <div className="row between" style={{ marginTop: 0, marginBottom: 12 }}>
+        <h3 className="h3" style={{ margin: 0 }}><Tv size={18} /> TVs</h3>
+        <Link to="/tv" className="btn btn--ghost btn--sm">Connect a TV</Link>
+      </div>
+      <ErrorNote error={error} />
+      {devices && devices.length === 0 && (
+        <p className="muted small" style={{ margin: 0 }}>No TVs yet. Install KinCast on a Roku TV, open it, and enter the code it shows at <Link to="/tv">Connect a TV</Link>.</p>
+      )}
+      {devices && devices.length > 0 && (
+        <ul className="tv-list">
+          {devices.map((d) => (
+            <li key={d.id}>
+              <Tv size={20} className="muted" />
+              <div>
+                <div>{d.name}</div>
+                <div className="muted small">Connected {ago(d.createdAt)} · last used {ago(d.lastSeenAt)}</div>
+              </div>
+              <button type="button" className="btn btn--text btn--sm" onClick={() => remove(d)}>Sign out</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

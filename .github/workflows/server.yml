@@ -1,0 +1,53 @@
+name: Server tests
+
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', '.github/workflows/server.yml']
+  pull_request:
+    paths: ['server/**', '.github/workflows/server.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kincast
+          POSTGRES_PASSWORD: kincast
+          POSTGRES_DB: kincast
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kincast" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Start KinCast
+        env:
+          DATABASE_URL: postgres://kincast:kincast@localhost:5432/kincast
+          DATA_DIR: ${{ runner.temp }}/kincast
+          SESSION_SECRET: ci-session-secret-ci-session-secret-1234
+          PUBLIC_URL: http://kincast.test
+          PORT: '3000'
+        run: |
+          node src/index.js > "$RUNNER_TEMP/server.log" 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:3000/api/health && break; sleep 1; done
+      - name: Tests
+        env:
+          KINCAST_TEST_URL: http://localhost:3000
+        run: npm test
+      - name: Server log
+        if: failure()
+        run: cat "$RUNNER_TEMP/server.log"

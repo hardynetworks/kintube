@@ -1,0 +1,64 @@
+name: Roku channel
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths: ['roku/**', '.github/workflows/roku.yml']
+  pull_request:
+    paths: ['roku/**', '.github/workflows/roku.yml']
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  channel:
+    name: kincast-roku.zip
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: roku
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: roku/package-lock.json
+      - run: npm ci --no-audit --no-fund
+
+      - name: Version from the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          IFS=. read -r major minor patch <<< "${GITHUB_REF_NAME#v}"
+          sed -i "s/^major_version=.*/major_version=${major:-1}/; s/^minor_version=.*/minor_version=${minor:-0}/; s/^build_version=.*/build_version=${patch:-0}/" manifest
+          cat manifest | grep version
+
+      - name: Compile check (BrighterScript)
+        run: npm run check
+      - name: Unit tests
+        run: npm test
+      - name: Package
+        run: |
+          npm run build
+          ls -l out/kincast-roku.zip
+          sha256sum out/kincast-roku.zip | tee out/kincast-roku.zip.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kincast-roku
+          path: |
+            roku/out/kincast-roku.zip
+            roku/out/kincast-roku.zip.sha256
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "KinCast $tag" --generate-notes
+          gh release upload "$tag" out/kincast-roku.zip out/kincast-roku.zip.sha256 --clobber

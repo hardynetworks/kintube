@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- First run (or when the server can't be reached): where is this family's KinCast? -->
+<component name="SetupScreen" extends="Group">
+  <interface>
+    <field id="address" type="string" onChange="showAddress" />
+    <field id="error" type="string" onChange="showError" />
+    <field id="action" type="assocarray" alwaysNotify="true" />
+    <field id="closing" type="boolean" />
+    <field id="shown" type="boolean" alwaysNotify="true" />
+    <function name="takeFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/lib/util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/lib/api.brs" />
+  <script type="text/brightscript" uri="pkg:/components/screens/SetupScreen.brs" />
+  <children>
+    <Poster uri="pkg:/images/logo.png" width="304" height="100" translation="[808,150]" />
+    <Label id="title" text="Connect to your KinCast" width="1920" horizAlign="center" translation="[0,290]" color="0xF1F1F1FF" />
+    <Label id="help" width="1100" wrap="true" horizAlign="center" translation="[410,372]" color="0xAAAAAAFF"
+      text="Type the address you use to open KinCast in a web browser, like kincast.example.net, or a home-network address like 192.168.1.20:8095." />
+    <Poster id="box" uri="pkg:/images/field.9.png" width="900" height="96" translation="[510,556]" />
+    <Label id="addressLabel" width="840" height="96" vertAlign="center" translation="[540,556]" color="0xF1F1F1FF" />
+    <Label id="errorLabel" width="1100" wrap="true" maxLines="3" horizAlign="center" translation="[410,672]" color="0xFF6B6BFF" />
+    <ButtonGroup id="buttons" translation="[760,770]" minWidth="400" buttonHeight="80" itemSpacings="[20]"
+      focusBitmapUri="pkg:/images/button_focus.9.png" focusFootprintBitmapUri="pkg:/images/button.9.png"
+      textColor="0xF1F1F1FF" focusedTextColor="0x0F0F0FFF" iconUri="" focusedIconUri="" />
+    <BusySpinner id="spinner" translation="[912,790]" visible="false" />
+  </children>
+</component>

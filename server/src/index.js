@@ -12,6 +12,7 @@ import videoRoutes, { uploads, cleanupStaleUploads } from './routes/videos.js';
 import liveRoutes, { rtmp, sweepStaleLive } from './routes/live.js';
 import subscriptionRoutes, { pruneNotifications } from './routes/subscriptions.js';
 import adminRoutes, { syncNetbirdConfig } from './routes/admin.js';
+import tvRoutes from './routes/tv.js';
 import { loadSiteSettings } from './site.js';
 
 const app = express();
@@ -41,6 +42,7 @@ app.use('/api/uploads', uploads);
 app.use('/api/videos', videoRoutes);
 app.use('/api/live', liveRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/tv', tvRoutes);
 app.use('/api', subscriptionRoutes);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 

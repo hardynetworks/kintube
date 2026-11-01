@@ -1,0 +1,15 @@
+{
+  "name": "kincast-roku",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KinCast for Roku TVs",
+  "scripts": {
+    "check": "bsc --create-package false",
+    "build": "bsc",
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "brighterscript": "^0.69.0",
+    "brs-node": "^2.6.2"
+  }
+}

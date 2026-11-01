@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Search the family's videos, or (with owner set) everything one person shared. -->
+<component name="SearchScreen" extends="Group">
+  <interface>
+    <field id="owner" type="assocarray" onChange="showOwner" />
+    <field id="action" type="assocarray" alwaysNotify="true" />
+    <field id="closing" type="boolean" onChange="onClosing" />
+    <field id="shown" type="boolean" alwaysNotify="true" />
+    <function name="takeFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/lib/util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/lib/api.brs" />
+  <script type="text/brightscript" uri="pkg:/components/screens/SearchScreen.brs" />
+  <children>
+    <Poster uri="pkg:/images/logo.png" width="183" height="60" translation="[96,44]" />
+    <Label id="title" translation="[96,130]" width="1700" maxLines="1" color="0xFFFFFFFF" />
+    <MiniKeyboard id="keyboard" translation="[96,230]" />
+    <MarkupGrid id="grid" translation="[700,236]" itemComponentName="VideoItem"
+      numColumns="3" numRows="2" itemSize="[352,290]" itemSpacing="[34,44]" drawFocusFeedback="false" />
+    <Label id="status" translation="[700,260]" width="1100" wrap="true" color="0xAAAAAAFF" />
+    <Timer id="debounce" repeat="false" duration="0.6" />
+  </children>
+</component>

@@ -92,6 +92,14 @@ OBS and phone apps connect straight to the server on **TCP 1935**, so:
 - open **1935/tcp** in the server's firewall, and
 - give it a hostname that points at the server's public IP — e.g. `live.example.net`, **DNS only** (grey cloud) if you use Cloudflare — and enter it under **Server admin → Domain & addresses → Streaming host**.
 
+### On a Roku TV
+
+There's a KinCast channel for Roku TVs and sticks: home, live streams with
+family chat, search, and resume. Sign in by scanning a QR code with your
+phone. See [roku/README.md](roku/README.md) to install it.
+
+<img src="docs/screenshots/roku-home.png" width="640" alt="KinCast on a Roku TV">
+
 ### On HardyOS (one click)
 
 KinCast ships as a one-click app for [HardyOS](https://github.com/HARDYOS/HARDYOS).

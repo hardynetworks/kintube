@@ -17,6 +17,7 @@ import Family from './pages/Family.jsx';
 import Subscriptions from './pages/Subscriptions.jsx';
 import AdminServer from './pages/AdminServer.jsx';
 import Settings from './pages/Settings.jsx';
+import Tv from './pages/Tv.jsx';
 import NotFound from './pages/NotFound.jsx';
 
 function Private({ children, member, admin }) {
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="subscriptions" element={<Subscriptions />} />
         <Route path="admin" element={<Private admin><AdminServer /></Private>} />
         <Route path="settings" element={<Settings />} />
+        <Route path="tv" element={<Tv />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

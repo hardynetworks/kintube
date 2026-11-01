@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Sign in without typing a password: scan the QR code (or go to <site>/tv and
+     type the code) on a phone that's signed in to KinCast. -->
+<component name="PairScreen" extends="Group">
+  <interface>
+    <field id="action" type="assocarray" alwaysNotify="true" />
+    <field id="closing" type="boolean" onChange="onClosing" />
+    <field id="shown" type="boolean" alwaysNotify="true" />
+    <function name="takeFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/lib/util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/lib/api.brs" />
+  <script type="text/brightscript" uri="pkg:/components/screens/PairScreen.brs" />
+  <children>
+    <Poster uri="pkg:/images/logo.png" width="304" height="100" translation="[808,96]" />
+    <Label id="title" text="Sign in with your phone" width="1920" horizAlign="center" translation="[0,214]" color="0xF1F1F1FF" />
+
+    <!-- Left: QR code -->
+    <Poster id="qrCard" uri="pkg:/images/card.9.png" blendColor="0xFFFFFFFF" width="440" height="440" translation="[230,350]" />
+    <Poster id="qr" width="410" height="410" translation="[245,365]" />
+    <BusySpinner id="qrSpinner" translation="[402,522]" visible="true" />
+    <Label id="scan" text="Scan with your phone's camera" width="560" horizAlign="center" translation="[170,816]" color="0xF1F1F1FF" />
+
+    <!-- Divider -->
+    <Rectangle width="2" height="420" color="0x2A2A2AFF" translation="[820,360]" />
+    <Rectangle width="44" height="44" color="0x0F0F0FFF" translation="[799,546]" />
+    <Label id="or2" text="or" width="80" horizAlign="center" translation="[781,548]" color="0x777777FF" />
+
+    <!-- Right: type the code -->
+    <Label id="step1" text="Go to" translation="[900,370]" color="0xAAAAAAFF" />
+    <Label id="url" width="940" translation="[900,414]" color="0x22D3EEFF" />
+    <Label id="step2" text="and enter this code" translation="[900,520]" color="0xAAAAAAFF" />
+    <Group id="code" translation="[900,580]" />
+
+    <Label id="status" width="940" translation="[900,770]" color="0xAAAAAAFF" />
+    <Label id="footer" width="1920" horizAlign="center" translation="[0,970]" color="0x777777FF" />
+    <Timer id="poll" repeat="true" duration="3" />
+  </children>
+</component>

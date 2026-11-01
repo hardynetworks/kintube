@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A tile in a row or grid: a video, a live stream, or a family member.
+     itemContent.data holds what the API returned; itemContent.kind says which. -->
+<component name="VideoItem" extends="Group">
+  <interface>
+    <field id="itemContent" type="node" onChange="onContent" />
+    <field id="width" type="float" onChange="layout" />
+    <field id="height" type="float" onChange="layout" />
+    <field id="focusPercent" type="float" onChange="onFocus" />
+    <field id="rowListHasFocus" type="boolean" onChange="onFocus" />
+    <field id="gridHasFocus" type="boolean" onChange="onFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/lib/util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/items/VideoItem.brs" />
+  <children>
+    <Poster id="ring" uri="pkg:/images/ring.9.png" opacity="0" />
+    <Poster id="frame" uri="pkg:/images/card.9.png" blendColor="0x1A1A1AFF" />
+    <Poster id="thumb" loadDisplayMode="scaleToZoom" />
+    <Group id="avatar" visible="false">
+      <Poster id="avatarCircle" uri="pkg:/images/circle.png" />
+      <Label id="avatarText" horizAlign="center" vertAlign="center" color="0xFFFFFFFF" />
+    </Group>
+    <Poster id="badge" uri="pkg:/images/card.9.png" blendColor="0x000000CC" visible="false" />
+    <Label id="badgeText" horizAlign="center" vertAlign="center" color="0xFFFFFFFF" visible="false" />
+    <Label id="title" maxLines="1" color="0xF1F1F1FF" />
+    <Label id="sub" maxLines="1" color="0xAAAAAAFF" />
+  </children>
+</component>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Home: what's on now and the family's videos in rows, with the focused one up top. -->
+<component name="HomeScreen" extends="Group">
+  <interface>
+    <field id="action" type="assocarray" alwaysNotify="true" />
+    <field id="closing" type="boolean" onChange="onClosing" />
+    <field id="shown" type="boolean" alwaysNotify="true" onChange="onShown" />
+    <function name="takeFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/lib/util.brs" />
+  <script type="text/brightscript" uri="pkg:/components/lib/api.brs" />
+  <script type="text/brightscript" uri="pkg:/components/screens/HomeScreen.brs" />
+  <children>
+    <!-- The focused item, large -->
+    <Poster id="backdrop" width="1160" height="653" translation="[760,0]" loadDisplayMode="scaleToZoom" />
+    <Poster id="fadeLeft" uri="pkg:/images/fade_left.png" width="760" height="653" translation="[760,0]" />
+    <Poster id="fadeBottom" uri="pkg:/images/fade_bottom.png" width="1160" height="300" translation="[760,353]" />
+    <Poster id="fadeTop" uri="pkg:/images/fade_top.png" width="1160" height="220" translation="[760,0]" />
+
+    <Poster uri="pkg:/images/logo.png" width="183" height="60" translation="[96,44]" />
+    <Label id="family" translation="[310,52]" height="46" vertAlign="center" color="0xAAAAAAFF" />
+    <Label id="hint" text="*  Search and options" width="600" horizAlign="right" translation="[1224,52]" height="46" vertAlign="center" color="0x8A8A8AFF" />
+
+    <Group id="hero" translation="[96,160]">
+      <Group id="ownerRow">
+        <Poster id="ownerDot" uri="pkg:/images/circle.png" width="44" height="44" />
+        <Label id="ownerInitials" width="44" height="44" horizAlign="center" vertAlign="center" color="0xFFFFFFFF" />
+        <Label id="ownerName" translation="[60,0]" height="44" vertAlign="center" color="0xF1F1F1FF" />
+      </Group>
+      <Label id="heroTitle" translation="[0,64]" width="860" maxLines="2" wrap="true" lineSpacing="-4" color="0xFFFFFFFF" />
+      <Label id="heroMeta" translation="[0,214]" width="860" color="0xAAAAAAFF" />
+      <Label id="heroDesc" translation="[0,262]" width="780" maxLines="3" wrap="true" color="0xC8C8C8FF" />
+    </Group>
+
+    <RowList id="rows" translation="[96,600]" itemComponentName="VideoItem"
+      numRows="2" itemSize="[1824,330]" itemSpacing="[0,24]"
+      rowItemSpacing="[[28,0]]" showRowLabel="[true]" rowLabelOffset="[[0,14]]"
+      rowLabelColor="0xF1F1F1FF" drawFocusFeedback="false"
+      rowFocusAnimationStyle="floatingFocus" vertFocusAnimationStyle="fixedFocus" />
+
+    <Label id="empty" visible="false" translation="[96,700]" width="1400" wrap="true" color="0xAAAAAAFF" />
+    <BusySpinner id="spinner" translation="[912,760]" visible="true" />
+    <Timer id="refresh" repeat="true" duration="90" />
+  </children>
+</component>
