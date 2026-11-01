@@ -1,6 +1,12 @@
 {
   "rootDir": ".",
-  "files": ["manifest", "source/**/*", "components/**/*", "images/**/*", "fonts/**/*"],
+  "files": [
+    "manifest",
+    "source/**/*",
+    "components/**/*",
+    "images/**/*",
+    "fonts/**/*"
+  ],
   "outFile": "out/kincast-roku.zip",
   "retainStagingDir": false,
   "diagnosticFilters": []
